@@ -1,0 +1,13 @@
+class <%= migration_class_name %> < ActiveRecord::Migration
+  def self.up
+    change_table :jwt_tokens do |t|
+      t.string :addon_key
+      t.string :client_key
+      t.string :shared_secret
+      t.string :product_type
+      t.string :user_key
+    end
+
+    add_index(:jwt_tokens, [:client_key, :user_key])
+  end
+end
