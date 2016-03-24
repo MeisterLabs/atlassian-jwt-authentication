@@ -25,7 +25,6 @@ module AtlassianJwtAuthentication
     end
 
     def generate_migration
-      pp 'generating migration...'
       migration_template 'jwt_tokens_migration.rb.erb', "db/migrate/#{migration_file_name}"
     end
 
