@@ -17,8 +17,8 @@ Or, if you're using Bundler, just add the following to your Gemfile:
 
 ## Usage
 
-This gem relies on the `jwt_tokens` table being present in your database.
-The required fields are:
+This gem relies on the `jwt_tokens` table being present in your database and the associated JwtToken model.
+The expected fields are:
 
 * `addon_key`
 * `client_key`
@@ -26,10 +26,11 @@ The required fields are:
 * `product_type`
 * `user_key`
 
-Or you can use the provided generator that will create this table for you:
+Or you can use the provided generators that will create the table and/or the model for you:
 
 ```ruby
-bundle exec rails g atlassian_jwt_authentication:create_tables
+bundle exec rails g atlassian_jwt_authentication:create_table
+bundle exec rails g atlassian_jwt_authentication:create_model
 
 ```
 

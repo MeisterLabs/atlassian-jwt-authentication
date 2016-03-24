@@ -1,7 +1,7 @@
 require 'rails/generators/active_record'
 
 module AtlassianJwtAuthentication
-  class CreateTablesGenerator < Rails::Generators::Base
+  class CreateTableGenerator < Rails::Generators::Base
     include Rails::Generators::Migration
     desc 'Create a migration to add atlassian jwt specific fields to your model.'
 
