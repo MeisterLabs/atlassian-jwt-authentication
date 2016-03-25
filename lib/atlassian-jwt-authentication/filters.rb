@@ -15,24 +15,21 @@ module AtlassianJwtAuthentication
       # Identifies the category of Atlassian product, e.g. jira or confluence.
       product_type = params[:productType]
 
-      user_key = params[:user_key]
+      @jwt_auth = JwtToken.where(client_key: client_key).first
+      @jwt_auth = JwtToken.new(client_key: client_key) unless @jwt_auth
 
-      jwt_token = where(client_key: client_key).first
-      jwt_token = new(client_key: client_key) unless jwt_token
+      @jwt_auth.addon_key = addon_key
+      @jwt_auth.shared_secret = shared_secret
+      @jwt_auth.product_type = "atlassian:#{product_type}"
 
-      jwt_token.addon_key = addon_key
-      jwt_token.shared_secret = shared_secret
-      jwt_token.product_type = "atlassian:#{product_type}"
-      jwt_token.user_key = user_key
-
-      jwt_token.save!
+      @jwt_auth.save!
     end
 
     def on_add_on_uninstalled
       return false unless params[:clientKey].present?
 
-      jwt_token = JwtToken.where(client_key: params[:clientKey], user_key: params[:user_key]).first
-      jwt_token.destroy if jwt_token
+      @jwt_auth = JwtToken.where(client_key: params[:clientKey]).first
+      @jwt_auth.destroy if @jwt_auth
     end
 
     def verify_jwt
@@ -41,16 +38,25 @@ module AtlassianJwtAuthentication
         return
       end
 
+      # Decode the JWT parameter without verification
       decoded = JWT.decode(params[:jwt], nil, false)
 
+      # Extract the data
       data = decoded[0]
       encoding_data = decoded[1]
-      jwt_token = JwtToken.where(
-          client_key: data['iss'],
-          user_key: data['context']['user']['userKey']
+
+      # Find a matching JWT token in the DB
+      @jwt_auth = JwtToken.where(
+          client_key: data['iss']
       ).first
 
-      unless jwt_token
+      unless @jwt_auth
+        render(nothing: true, status: :unauthorized)
+        return
+      end
+
+      # Discard tokens without verification
+      if params[:jwt] == 'none'
         render(nothing: true, status: :unauthorized)
         return
       end
@@ -63,12 +69,21 @@ module AtlassianJwtAuthentication
       end
 
       begin
-        JWT.verify_signature(encoding_data['alg'], jwt_token.shared_secret, signing_input, signature)
+        JWT.verify_signature(encoding_data['alg'], @jwt_auth.shared_secret, signing_input, signature)
       rescue Exception => e
         render(nothing: true, status: :unauthorized)
         return
       end
 
+      # Has this user accessed our add-on before?
+      # If not, create a new JwtUser
+      @user_context = data['context']['user']
+
+      # Is this an Atlassian user we haven't seen before?
+      @jwt_user = @jwt_auth.jwt_users.where(user_key: @user_context['userKey']).first
+      @jwt_user = JwtUser.create(jwt_token_id: @jwt_auth.id, user_key: @user_context['userKey']) unless @jwt_user
+
+      # Everything's alright
       true
     end
   end

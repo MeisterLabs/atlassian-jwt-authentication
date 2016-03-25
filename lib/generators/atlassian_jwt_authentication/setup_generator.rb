@@ -1,9 +1,12 @@
 require 'rails/generators/active_record'
 
 module AtlassianJwtAuthentication
-  class CreateTableGenerator < Rails::Generators::Base
+  class SetupGenerator < Rails::Generators::Base
     include Rails::Generators::Migration
     desc 'Create a migration to add atlassian jwt specific fields to your model.'
+    argument :database_name, required: false,
+             type: :string,
+             desc: 'Additional database name configuration, if different from `database.yml`'
 
     def self.source_root
       @source_root ||= File.expand_path('../templates', __FILE__)
@@ -16,7 +19,7 @@ module AtlassianJwtAuthentication
 
     def self.current_migration_number(dirname) #:nodoc:
       migration_lookup_at(dirname).collect do |file|
-        File.basename(file).split("_").first.to_i
+        File.basename(file).split('_').first.to_i
       end.max.to_i
     end
 
@@ -25,19 +28,13 @@ module AtlassianJwtAuthentication
     end
 
     def generate_migration
-      migration_template 'jwt_tokens_migration.rb.erb', "db/migrate/#{migration_file_name}"
+      migration_template 'jwt_tokens_migration.rb.erb', "db/#{database_name.present? ? "db_#{database_name}/" : ''}migrate/create_atlassian_jwt_tokens.rb"
+      migration_template 'jwt_users_migration.rb.erb', "db/#{database_name.present? ? "db_#{database_name}/" : ''}migrate/create_atlassian_jwt_users.rb"
     end
 
-    def migration_name
-      'create_atlassian_jwt_tokens'
-    end
-
-    def migration_file_name
-      "#{migration_name}.rb"
-    end
-
-    def migration_class_name
-      migration_name.camelize
+    def generate_models
+      template 'jwt_token.rb', File.join('app/models', '', 'jwt_token.rb')
+      template 'jwt_user.rb', File.join('app/models', '', 'jwt_user.rb')
     end
   end
 end

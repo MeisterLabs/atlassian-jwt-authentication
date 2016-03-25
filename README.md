@@ -17,22 +17,32 @@ Or, if you're using Bundler, just add the following to your Gemfile:
 
 ## Usage
 
-This gem relies on the `jwt_tokens` table being present in your database and the associated JwtToken model.
-The expected fields are:
+This gem relies on the `jwt_tokens` and `jwt_users` tables being present in your database and 
+the associated JwtToken and JwtUser models.
+
+`jwt_tokens` must contain the following fields:
 
 * `addon_key`
 * `client_key`
 * `shared_secret`
 * `product_type`
-* `user_key`
 
-Or you can use the provided generators that will create the table and/or the model for you:
+`jwt_users` must contain the following fields:
+* `user_key`
+* `jwt_token_id`
+
+You can use the provided generators that will create the table and/or the model for you:
 
 ```ruby
-bundle exec rails g atlassian_jwt_authentication:create_table
-bundle exec rails g atlassian_jwt_authentication:create_model
-
+bundle exec rails g atlassian_jwt_authentication:setup
 ```
+
+If you are using another database for the JWT data storage than the default one, pass the name of the DB config to the generator:
+```ruby
+bundle exec rails g atlassian_jwt_authentication:setup shared
+```
+
+Don't forget to run your migrations now!
 
 ## Requirements
 
