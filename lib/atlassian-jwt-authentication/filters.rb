@@ -17,13 +17,15 @@ module AtlassianJwtAuthentication
 
       user_key = params[:user_key]
 
-      JwtToken.create_or_update(
-          addon_key: addon_key,
-          client_key: client_key,
-          shared_secret: shared_secret,
-          product_type: "atlassian:#{product_type}",
-          user_key: user_key
-      )
+      jwt_token = where(client_key: client_key).first
+      jwt_token = new(client_key: client_key) unless jwt_token
+
+      jwt_token.addon_key = addon_key
+      jwt_token.shared_secret = shared_secret
+      jwt_token.product_type = "atlassian:#{product_type}"
+      jwt_token.user_key = user_key
+
+      jwt_token.save!
     end
 
     def on_add_on_uninstalled
