@@ -1,7 +1,36 @@
 module AtlassianJwtAuthentication
   module Filters
-    def self.included
-      pp 'included'
+    def on_add_on_installed
+      # Add-on key that was installed into the Atlassian Product, as it appears in your add-on's descriptor.
+      addon_key = params[:key]
+
+      # Identifying key for the Atlassian product instance that the add-on was installed into.
+      # This will never change for a given instance, and is unique across all Atlassian product tenants.
+      # This value should be used to key tenant details in your add-on
+      client_key = params[:clientKey]
+
+      # Use this string to sign outgoing JWT tokens and validate incoming JWT tokens
+      shared_secret = params[:sharedSecret]
+
+      # Identifies the category of Atlassian product, e.g. jira or confluence.
+      product_type = params[:productType]
+
+      user_key = params[:user_key]
+
+      JwtToken.create_or_update(
+          addon_key: addon_key,
+          client_key: client_key,
+          shared_secret: shared_secret,
+          product_type: "atlassian:#{product_type}",
+          user_key: user_key
+      )
+    end
+
+    def on_add_on_uninstalled
+      return false unless params[:clientKey].present?
+
+      jwt_token = JwtToken.where(client_key: params[:clientKey], user_key: params[:user_key]).first
+      jwt_token.destroy if jwt_token
     end
 
     def verify_jwt
