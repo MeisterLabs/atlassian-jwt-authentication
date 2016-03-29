@@ -5,4 +5,6 @@ class JwtToken < ActiveRecord::Base
   <% end %>
 
   has_many :jwt_users, dependent: :destroy
+
+  attr_accessible :addon_key, :client_key, :shared_secret, :product_type
 end
