@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency('i18n', '>= 0.6.9')
   s.add_dependency('builder', '>= 2.1.2', '< 4.0.0')
-  s.add_dependency('jwt', '>= 0.1.6')
+  s.add_dependency('jwt', '~> 1.0')
 
   s.add_development_dependency('rake')
   s.add_development_dependency('activerecord', '>= 4.1.0')
