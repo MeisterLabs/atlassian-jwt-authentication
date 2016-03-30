@@ -54,6 +54,8 @@ The gem will take care of setting up the necessary JWT tokens upon add-on instal
 delete the appropriate tokens upon un-installation. To use this functionality, simply call
  
 ```ruby
+include AtlassianJwtAuthentication::Filters
+
 on_add_on_installed        # call this in your installed method
 on_add_on_uninstalled      # call this in your uninstalled method
 ```
@@ -62,6 +64,8 @@ Furthermore, protect the methods that will be JWT aware by using the gem's
 JWT token verification filter:
 
 ```ruby
+include AtlassianJwtAuthentication::Filters
+
 # will render(nothing: true, status: unauthorized) if verification fails
 before_filter :verify_jwt, only: [:display, :editor]   
 ```
