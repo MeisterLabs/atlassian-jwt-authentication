@@ -13,7 +13,7 @@ You can check out the latest source from git:
 
 Or, if you're using Bundler, just add the following to your Gemfile:
 
-    gem 'atlassian-jwt-authentication'
+    gem 'atlassian-jwt-authentication', git: 'https://github.com/MeisterLabs/atlassian-jwt-authentication.git'
 
 ## Usage
 
