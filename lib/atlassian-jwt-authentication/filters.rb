@@ -35,7 +35,7 @@ module AtlassianJwtAuthentication
     def verify_jwt
       unless params[:jwt].present?
         render(nothing: true, status: :unauthorized)
-        return
+        return false
       end
 
       # Decode the JWT parameter without verification
@@ -52,27 +52,27 @@ module AtlassianJwtAuthentication
 
       unless @jwt_auth
         render(nothing: true, status: :unauthorized)
-        return
+        return false
       end
 
       # Discard tokens without verification
       if params[:jwt] == 'none'
         render(nothing: true, status: :unauthorized)
-        return
+        return false
       end
 
       # Verify the signature with the sharedSecret and the algorithm specified in the header's alg field
       header, payload, signature, signing_input = JWT.decoded_segments(params[:jwt])
       unless header && payload
         render(nothing: true, status: :unauthorized)
-        return
+        return false
       end
 
       begin
         JWT.verify_signature(encoding_data['alg'], @jwt_auth.shared_secret, signing_input, signature)
       rescue Exception => e
         render(nothing: true, status: :unauthorized)
-        return
+        return false
       end
 
       # Has this user accessed our add-on before?
