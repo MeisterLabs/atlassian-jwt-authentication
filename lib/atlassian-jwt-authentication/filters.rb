@@ -1,5 +1,7 @@
 module AtlassianJwtAuthentication
   module Filters
+    protected
+
     def on_add_on_installed
       # Add-on key that was installed into the Atlassian Product, as it appears in your add-on's descriptor.
       addon_key = params[:key]
