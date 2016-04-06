@@ -35,13 +35,21 @@ module AtlassianJwtAuthentication
     end
 
     def verify_jwt
-      unless params[:jwt].present?
+      jwt = nil
+      jwt = params[:jwt] if params[:jwt].present?
+
+      if request.headers['authorization'].present?
+        algorithm, jwt = request.headers['authorization'].split(' ')
+        jwt = nil unless algorithm == 'JWT'
+      end
+
+      unless jwt.present?
         render(nothing: true, status: :unauthorized)
         return false
       end
 
       # Decode the JWT parameter without verification
-      decoded = JWT.decode(params[:jwt], nil, false)
+      decoded = JWT.decode(jwt, nil, false)
 
       # Extract the data
       data = decoded[0]
@@ -58,13 +66,13 @@ module AtlassianJwtAuthentication
       end
 
       # Discard tokens without verification
-      if params[:jwt] == 'none'
+      if encoding_data['alg'] == 'none'
         render(nothing: true, status: :unauthorized)
         return false
       end
 
       # Verify the signature with the sharedSecret and the algorithm specified in the header's alg field
-      header, payload, signature, signing_input = JWT.decoded_segments(params[:jwt])
+      header, payload, signature, signing_input = JWT.decoded_segments(jwt)
       unless header && payload
         render(nothing: true, status: :unauthorized)
         return false
