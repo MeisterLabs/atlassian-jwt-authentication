@@ -17,8 +17,8 @@ module AtlassianJwtAuthentication
       # Identifies the category of Atlassian product, e.g. jira or confluence.
       product_type = params[:productType]
 
-      @jwt_auth = JwtToken.where(client_key: client_key).first
-      @jwt_auth = JwtToken.new(client_key: client_key) unless @jwt_auth
+      @jwt_auth = JwtToken.where(client_key: client_key, addon_key: addon_key).first
+      @jwt_auth = JwtToken.new(client_key: client_key, addon_key: addon_key) unless @jwt_auth
 
       @jwt_auth.addon_key = addon_key
       @jwt_auth.shared_secret = shared_secret
@@ -34,7 +34,12 @@ module AtlassianJwtAuthentication
       @jwt_auth.destroy if @jwt_auth
     end
 
-    def verify_jwt
+    def verify_jwt(addon_key)
+      unless addon_key
+        render(nothing: true, status: :unauthorized)
+        return false
+      end
+
       jwt = nil
       jwt = params[:jwt] if params[:jwt].present?
 
@@ -57,7 +62,8 @@ module AtlassianJwtAuthentication
 
       # Find a matching JWT token in the DB
       @jwt_auth = JwtToken.where(
-          client_key: data['iss']
+          client_key: data['iss'],
+          addon_key: addon_key
       ).first
 
       unless @jwt_auth
