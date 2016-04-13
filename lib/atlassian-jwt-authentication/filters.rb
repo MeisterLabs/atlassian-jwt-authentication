@@ -28,10 +28,15 @@ module AtlassianJwtAuthentication
     end
 
     def on_add_on_uninstalled
+      addon_key = params[:key]
+      client_key = params[:clientKey]
+
       return false unless params[:clientKey].present?
 
-      @jwt_auth = JwtToken.where(client_key: params[:clientKey]).first
-      @jwt_auth.destroy if @jwt_auth
+      auths = JwtToken.where(client_key: client_key, addon_key: addon_key)
+      auths.each do |auth|
+        auth.destroy
+      end
     end
 
     def verify_jwt(addon_key)
