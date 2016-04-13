@@ -61,13 +61,16 @@ on_add_on_uninstalled      # call this in your uninstalled method
 ```
  
 Furthermore, protect the methods that will be JWT aware by using the gem's
-JWT token verification filter:
+JWT token verification filter. You need to pass your add-on descriptor so that
+the appropriate JWT shared secret can be identified:
 
 ```ruby
 include AtlassianJwtAuthentication::Filters
 
 # will render(nothing: true, status: unauthorized) if verification fails
-before_filter :verify_jwt, only: [:display, :editor]   
+before_filter only: [:display, :editor] do |controller|
+  controller.send(:verify_jwt, 'your-add-on-key')
+end
 ```
 
 Methods that are protected by the `verify_jwt` filter also have access to information
