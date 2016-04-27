@@ -18,42 +18,73 @@ module AtlassianJwtAuthentication
       product_type = params[:productType]
 
       @jwt_auth = JwtToken.where(client_key: client_key, addon_key: addon_key).first
-      @jwt_auth = JwtToken.new(client_key: client_key, addon_key: addon_key) unless @jwt_auth
+      if @jwt_auth
+        # The add-on was previously installed on this client
+        return false unless _verify_jwt(addon_key)
+      else
+        @jwt_auth = JwtToken.new(client_key: client_key, addon_key: addon_key)
+      end
 
       @jwt_auth.addon_key = addon_key
       @jwt_auth.shared_secret = shared_secret
       @jwt_auth.product_type = "atlassian:#{product_type}"
 
       @jwt_auth.save!
+
+      true
     end
 
     def on_add_on_uninstalled
       addon_key = params[:key]
+
+      return unless _verify_jwt(addon_key)
+
       client_key = params[:clientKey]
 
-      return false unless params[:clientKey].present?
+      return false unless client_key.present?
 
       auths = JwtToken.where(client_key: client_key, addon_key: addon_key)
       auths.each do |auth|
         auth.destroy
       end
+
+      true
     end
 
     def verify_jwt(addon_key)
-      unless addon_key
+      return false unless _verify_jwt(addon_key, true)
+
+      unless @user_context
         render(nothing: true, status: :unauthorized)
         return false
       end
 
+      # Is this an Atlassian user we haven't seen before?
+      @jwt_user = @jwt_auth.jwt_users.where(user_key: @user_context['userKey']).first
+      @jwt_user = JwtUser.create(jwt_token_id: @jwt_auth.id, user_key: @user_context['userKey']) unless @jwt_user
+
+      # Everything's alright
+      true
+    end
+
+    private
+
+    def _verify_jwt(addon_key, consider_param = false)
       jwt = nil
-      jwt = params[:jwt] if params[:jwt].present?
+
+      if consider_param
+        jwt = params[:jwt] if params[:jwt].present?
+      elsif !request.headers['authorization'].present?
+        render(nothing: true, status: :unauthorized)
+        return false
+      end
 
       if request.headers['authorization'].present?
         algorithm, jwt = request.headers['authorization'].split(' ')
         jwt = nil unless algorithm == 'JWT'
       end
 
-      unless jwt.present?
+      unless jwt.present? && addon_key.present?
         render(nothing: true, status: :unauthorized)
         return false
       end
@@ -100,11 +131,6 @@ module AtlassianJwtAuthentication
       # If not, create a new JwtUser
       @user_context = data['context']['user']
 
-      # Is this an Atlassian user we haven't seen before?
-      @jwt_user = @jwt_auth.jwt_users.where(user_key: @user_context['userKey']).first
-      @jwt_user = JwtUser.create(jwt_token_id: @jwt_auth.id, user_key: @user_context['userKey']) unless @jwt_user
-
-      # Everything's alright
       true
     end
   end
