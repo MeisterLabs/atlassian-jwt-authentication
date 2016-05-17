@@ -1,3 +1,5 @@
+require 'jwt'
+
 module AtlassianJwtAuthentication
   module Filters
     protected
@@ -114,7 +116,18 @@ module AtlassianJwtAuthentication
       end
 
       # Verify the signature with the sharedSecret and the algorithm specified in the header's alg field
-      header, payload, signature, signing_input = JWT.decoded_segments(jwt)
+      options = {
+          verify_expiration: true,
+          verify_not_before: true,
+          verify_iss: false,
+          verify_iat: false,
+          verify_jti: false,
+          verify_aud: false,
+          verify_sub: false,
+          leeway: 0
+      }
+      decoder = JWT::Decode.new(jwt, nil, true, options)
+      header, payload, signature, signing_input = decoder.decode_segments
       unless header && payload
         render(nothing: true, status: :unauthorized)
         return false
@@ -135,7 +148,10 @@ module AtlassianJwtAuthentication
     end
 
     def jwt_token_params
-      params.permit(:client_key, :addon_key)
+      {
+          client_key: params.permit(:clientKey)['clientKey'],
+          addon_key: params.permit(:key)['key']
+      }
     end
   end
 end
