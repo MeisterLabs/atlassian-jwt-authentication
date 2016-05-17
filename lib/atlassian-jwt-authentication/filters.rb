@@ -22,7 +22,7 @@ module AtlassianJwtAuthentication
         # The add-on was previously installed on this client
         return false unless _verify_jwt(addon_key)
       else
-        @jwt_auth = JwtToken.new(client_key: client_key, addon_key: addon_key)
+        @jwt_auth = JwtToken.new(jwt_token_params)
       end
 
       @jwt_auth.addon_key = addon_key
@@ -132,6 +132,10 @@ module AtlassianJwtAuthentication
       @user_context = data['context']['user']
 
       true
+    end
+
+    def jwt_token_params
+      params.permit(:client_key, :addon_key)
     end
   end
 end
