@@ -72,6 +72,7 @@ module AtlassianJwtAuthentication
     private
 
     def _verify_jwt(addon_key, consider_param = false)
+      pp addon_key
       jwt = nil
 
       if consider_param
@@ -92,7 +93,9 @@ module AtlassianJwtAuthentication
       end
 
       # Decode the JWT parameter without verification
+      pp jwt
       decoded = JWT.decode(jwt, nil, false)
+      pp decoded
 
       # Extract the data
       data = decoded[0]
@@ -116,18 +119,23 @@ module AtlassianJwtAuthentication
       end
 
       # Verify the signature with the sharedSecret and the algorithm specified in the header's alg field
-      options = {
-          verify_expiration: true,
-          verify_not_before: true,
-          verify_iss: false,
-          verify_iat: false,
-          verify_jti: false,
-          verify_aud: false,
-          verify_sub: false,
-          leeway: 0
-      }
-      decoder = JWT::Decode.new(jwt, nil, true, options)
-      header, payload, signature, signing_input = decoder.decode_segments
+      if JWT.const_defined?(:Decode)
+        options = {
+            verify_expiration: true,
+            verify_not_before: true,
+            verify_iss: false,
+            verify_iat: false,
+            verify_jti: false,
+            verify_aud: false,
+            verify_sub: false,
+            leeway: 0
+        }
+        decoder = JWT::Decode.new(jwt, nil, true, options)
+        header, payload, signature, signing_input = decoder.decode_segments
+      else
+        header, payload, signature, signing_input = JWT.decoded_segments(jwt)
+      end
+
       unless header && payload
         render(nothing: true, status: :unauthorized)
         return false
