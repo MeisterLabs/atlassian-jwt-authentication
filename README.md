@@ -67,7 +67,7 @@ the appropriate JWT shared secret can be identified:
 ```ruby
 include AtlassianJwtAuthentication::Filters
 
-# will render(nothing: true, status: unauthorized) if verification fails
+# will head(:unauthorized) if verification fails
 before_filter only: [:display, :editor] do |controller|
   controller.send(:verify_jwt, 'your-add-on-key')
 end
