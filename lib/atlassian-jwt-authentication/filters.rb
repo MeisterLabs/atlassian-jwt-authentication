@@ -57,7 +57,7 @@ module AtlassianJwtAuthentication
       return false unless _verify_jwt(addon_key, true)
 
       unless @user_context
-        render(nothing: true, status: :unauthorized)
+        head(:unauthorized)
         return false
       end
 
@@ -78,7 +78,7 @@ module AtlassianJwtAuthentication
       if consider_param
         jwt = params[:jwt] if params[:jwt].present?
       elsif !request.headers['authorization'].present?
-        render(nothing: true, status: :unauthorized)
+        head(:unauthorized)
         return false
       end
 
@@ -88,7 +88,7 @@ module AtlassianJwtAuthentication
       end
 
       unless jwt.present? && addon_key.present?
-        render(nothing: true, status: :unauthorized)
+        head(:unauthorized)
         return false
       end
 
@@ -108,13 +108,13 @@ module AtlassianJwtAuthentication
       ).first
 
       unless @jwt_auth
-        render(nothing: true, status: :unauthorized)
+        head(:unauthorized)
         return false
       end
 
       # Discard tokens without verification
       if encoding_data['alg'] == 'none'
-        render(nothing: true, status: :unauthorized)
+        head(:unauthorized)
         return false
       end
 
@@ -137,14 +137,14 @@ module AtlassianJwtAuthentication
       end
 
       unless header && payload
-        render(nothing: true, status: :unauthorized)
+        head(:unauthorized)
         return false
       end
 
       begin
         JWT.verify_signature(encoding_data['alg'], @jwt_auth.shared_secret, signing_input, signature)
       rescue Exception => e
-        render(nothing: true, status: :unauthorized)
+        head(:unauthorized)
         return false
       end
 

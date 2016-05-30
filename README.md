@@ -13,7 +13,7 @@ You can check out the latest source from git:
 
 Or, if you're using Bundler, just add the following to your Gemfile:
 
-    gem 'atlassian-jwt-authentication', git: 'https://github.com/MeisterLabs/atlassian-jwt-authentication.git'
+    gem 'atlassian-jwt-authentication', git: 'https://github.com/MeisterLabs/atlassian-jwt-authentication.git', require: 'atlassian_jwt_authentication'
 
 ## Usage
 
@@ -67,7 +67,7 @@ the appropriate JWT shared secret can be identified:
 ```ruby
 include AtlassianJwtAuthentication::Filters
 
-# will render(nothing: true, status: unauthorized) if verification fails
+# will head(:unauthorized) if verification fails
 before_filter only: [:display, :editor] do |controller|
   controller.send(:verify_jwt, 'your-add-on-key')
 end
