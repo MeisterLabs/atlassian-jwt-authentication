@@ -95,8 +95,8 @@ pp current_jwt_user.display_name
 
 ### 3. Making a service call
 
-Build the URL required to make a service call with the `rest_api_url` helper.
-Make a service call with the `rest_api_call` helper that will handle the request for you.
+Build the URL required to make a service call with the `rest_api_url` helper or
+make a service call with the `rest_api_call` helper that will handle the request for you.
 Both require the method and the endpoint that you need to access:
 
 ```ruby
