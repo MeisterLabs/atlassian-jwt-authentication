@@ -69,7 +69,7 @@ JWT token verification filter. You need to pass your add-on descriptor so that
 the appropriate JWT shared secret can be identified:
 
 ```ruby
-include AtlassianJwtAuthentication::Filters
+include AtlassianJwtAuthentication
 
 # will respond with head(:unauthorized) if verification fails
 before_filter only: [:display, :editor] do |controller|
