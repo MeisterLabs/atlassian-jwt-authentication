@@ -60,6 +60,8 @@ The gem will take care of setting up the necessary JWT tokens upon add-on instal
 delete the appropriate tokens upon un-installation. To use this functionality, simply call
  
 ```ruby
+include AtlassianJwtAuthentication
+
 before_action :on_add_on_installed, only: [:installed]
 before_action :on_add_on_uninstalled, only: [:uninstalled]
 ```
