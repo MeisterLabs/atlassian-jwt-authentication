@@ -5,33 +5,38 @@ module AtlassianJwtAuthentication
     protected
 
     def on_add_on_installed
-      # Add-on key that was installed into the Atlassian Product, as it appears in your add-on's descriptor.
+      # Add-on key that was installed into the Atlassian Product,
+      # as it appears in your add-on's descriptor.
       addon_key = params[:key]
 
       # Identifying key for the Atlassian product instance that the add-on was installed into.
       # This will never change for a given instance, and is unique across all Atlassian product tenants.
-      # This value should be used to key tenant details in your add-on
+      # This value should be used to key tenant details in your add-on.
       client_key = params[:clientKey]
 
-      # Use this string to sign outgoing JWT tokens and validate incoming JWT tokens
+      # Use this string to sign outgoing JWT tokens and validate incoming JWT tokens.
       shared_secret = params[:sharedSecret]
 
-      # Identifies the category of Atlassian product, e.g. jira or confluence.
+      # Identifies the category of Atlassian product, e.g. Jira or Confluence.
       product_type = params[:productType]
 
-      @jwt_auth = JwtToken.where(client_key: client_key, addon_key: addon_key).first
-      if @jwt_auth
+      # The base URL of the instance
+      base_url = params[:baseUrl]
+
+      jwt_auth = JwtToken.where(client_key: client_key, addon_key: addon_key).first
+      if jwt_auth
         # The add-on was previously installed on this client
         return false unless _verify_jwt(addon_key)
       else
-        @jwt_auth = JwtToken.new(jwt_token_params)
+        self.current_jwt_auth = JwtToken.new(jwt_token_params)
       end
 
-      @jwt_auth.addon_key = addon_key
-      @jwt_auth.shared_secret = shared_secret
-      @jwt_auth.product_type = "atlassian:#{product_type}"
+      current_jwt_auth.addon_key = addon_key
+      current_jwt_auth.shared_secret = shared_secret
+      current_jwt_auth.product_type = "atlassian:#{product_type}"
+      current_jwt_auth.base_url = base_url if current_jwt_auth.respond_to?(:base_url)
 
-      @jwt_auth.save!
+      current_jwt_auth.save!
 
       true
     end
@@ -54,27 +59,20 @@ module AtlassianJwtAuthentication
     end
 
     def verify_jwt(addon_key)
-      return false unless _verify_jwt(addon_key, true)
-
-      unless @user_context
-        head(:unauthorized)
-        return false
-      end
-
-      # Is this an Atlassian user we haven't seen before?
-      @jwt_user = @jwt_auth.jwt_users.where(user_key: @user_context['userKey']).first
-      @jwt_user = JwtUser.create(jwt_token_id: @jwt_auth.id, user_key: @user_context['userKey']) unless @jwt_user
-
-      # Everything's alright
-      true
+      _verify_jwt(addon_key, true)
     end
 
     private
 
     def _verify_jwt(addon_key, consider_param = false)
-      pp addon_key
+      self.current_jwt_auth = nil
+      self.current_jwt_user = nil
+
       jwt = nil
 
+      # The JWT token can be either in the Authorization header
+      # or can be sent as a parameter. During the installation
+      # handshake we only accept the token coming in the header
       if consider_param
         jwt = params[:jwt] if params[:jwt].present?
       elsif !request.headers['authorization'].present?
@@ -93,21 +91,19 @@ module AtlassianJwtAuthentication
       end
 
       # Decode the JWT parameter without verification
-      pp jwt
       decoded = JWT.decode(jwt, nil, false)
-      pp decoded
 
       # Extract the data
       data = decoded[0]
       encoding_data = decoded[1]
 
       # Find a matching JWT token in the DB
-      @jwt_auth = JwtToken.where(
+      jwt_auth = JwtToken.where(
           client_key: data['iss'],
           addon_key: addon_key
       ).first
 
-      unless @jwt_auth
+      unless jwt_auth
         head(:unauthorized)
         return false
       end
@@ -119,6 +115,7 @@ module AtlassianJwtAuthentication
       end
 
       # Verify the signature with the sharedSecret and the algorithm specified in the header's alg field
+      # The JWT gem has changed the way you can access the decoded segments in v 1.5.5, we just handle both.
       if JWT.const_defined?(:Decode)
         options = {
             verify_expiration: true,
@@ -141,16 +138,29 @@ module AtlassianJwtAuthentication
         return false
       end
 
+      # Now verify the signature with the proper algorithm
       begin
-        JWT.verify_signature(encoding_data['alg'], @jwt_auth.shared_secret, signing_input, signature)
+        JWT.verify_signature(encoding_data['alg'], jwt_auth.shared_secret, signing_input, signature)
       rescue Exception => e
         head(:unauthorized)
         return false
       end
 
-      # Has this user accessed our add-on before?
-      # If not, create a new JwtUser
-      @user_context = data['context']['user']
+      self.current_jwt_auth = jwt_auth
+
+      # In the case of Confluence and Jira we receive user information inside the JWT token
+      if data['context'] && data['context']['user']
+        # Has this user accessed our add-on before?
+        # If not, create a new JwtUser
+
+        self.current_jwt_user = current_jwt_auth.jwt_users.where(user_key: data['context']['user']['userKey']).first
+        self.current_jwt_user = JwtUser.create(jwt_token_id: current_jwt_auth.id,
+                                               user_key: data['context']['user']['userKey'],
+                                               name: data['context']['user']['username'],
+                                               display_name: data['context']['user']['displayName']) unless current_jwt_user
+      else
+        self.current_jwt_user = nil
+      end
 
       true
     end

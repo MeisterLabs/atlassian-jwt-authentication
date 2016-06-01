@@ -8,6 +8,7 @@ class CreateAtlassianJwtTokens < ActiveRecord::Migration
         t.string :client_key
         t.string :shared_secret
         t.string :product_type
+        t.string :base_url
       end
 
       add_index(:jwt_tokens, :client_key)
