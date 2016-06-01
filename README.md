@@ -99,8 +99,30 @@ Build the URL required to make a service call with the `rest_api_url` helper.
 It requires the method and the endpoint that you need to access:
 
 ```ruby
-url = rest_api_url('POST', '/rest/api/2/issue')
+# Get available project types
 url = rest_api_url('GET', '/rest/api/2/project/type')
+if response.success?
+  # access the data through response.data
+else
+  # handle failures
+end
+
+# Create an issue
+data = {
+    fields: {
+        project: {
+            'id': 10100
+        },
+        summary: 'This is an issue summary',
+        issuetype: {
+            id: 10200
+        }
+    }
+}
+
+response = rest_api_call(:post, '/rest/api/2/issue', data)
+pp response.success?
+
 ```
 
 ## Requirements
