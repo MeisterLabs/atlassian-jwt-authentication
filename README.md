@@ -103,7 +103,7 @@ Both require the method and the endpoint that you need to access:
 
 ```ruby
 # Get available project types
-url = rest_api_url('GET', '/rest/api/2/project/type')
+url = rest_api_url(:get, '/rest/api/2/project/type')
 response = HTTParty.get(url)
 
 # Create an issue
