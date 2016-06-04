@@ -1,4 +1,5 @@
 require 'jwt'
+require 'httparty'
 
 module AtlassianJwtAuthentication
   module Helper
@@ -45,7 +46,7 @@ module AtlassianJwtAuthentication
                        }, current_jwt_auth.shared_secret)
 
       # return the service call URL with the JWT token added
-      "#{current_jwt_auth.base_url}#{endpoint}?jwt=#{jwt}"
+      "#{current_jwt_auth.api_base_url}#{endpoint}?jwt=#{jwt}"
     end
 
     def rest_api_call(method, endpoint, data = nil)
