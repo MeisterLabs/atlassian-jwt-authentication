@@ -22,6 +22,7 @@ module AtlassianJwtAuthentication
 
       # The base URL of the instance
       base_url = params[:baseUrl]
+      api_base_url = params[:baseApiUrl] || base_url
 
       jwt_auth = JwtToken.where(client_key: client_key, addon_key: addon_key).first
       if jwt_auth
@@ -35,8 +36,25 @@ module AtlassianJwtAuthentication
       current_jwt_auth.shared_secret = shared_secret
       current_jwt_auth.product_type = "atlassian:#{product_type}"
       current_jwt_auth.base_url = base_url if current_jwt_auth.respond_to?(:base_url)
+      current_jwt_auth.api_base_url = api_base_url if current_jwt_auth.respond_to?(:api_base_url)
 
       current_jwt_auth.save!
+
+      # BitBucket sends user details on installation
+      [:principal, :user].each do |key|
+        if params[key].present?
+          user = params[key]
+          if user[:username].present? && user[:display_name].present? \
+              && user[:uuid].present? && user[:type].present? && user[:type] == 'user'
+            self.current_jwt_user = current_jwt_auth.jwt_users.where(user_key: user[:uuid]).first
+            self.current_jwt_user = JwtUser.create(jwt_token_id: current_jwt_auth.id,
+                                                 user_key: user[:uuid],
+                                                 name: user[:username],
+                                                 display_name: user[:display_name]) unless current_jwt_user
+            break
+          end
+        end
+      end
 
       true
     end
