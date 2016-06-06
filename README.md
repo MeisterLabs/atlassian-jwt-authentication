@@ -31,6 +31,7 @@ the associated JwtToken and JwtUser models.
 * `shared_secret`
 * `product_type`
 * `base_url`
+* `api_base_url`
 
 `jwt_users` must contain the following fields:
 * `jwt_token_id`
