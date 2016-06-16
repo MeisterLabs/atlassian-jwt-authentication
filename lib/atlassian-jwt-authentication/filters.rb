@@ -44,14 +44,14 @@ module AtlassianJwtAuthentication
       [:principal, :user].each do |key|
         if params[key].present?
           user = params[key]
-          if user[:username].present? && user[:display_name].present? \
-              && user[:uuid].present? && user[:type].present? && user[:type] == 'user'
-            self.current_jwt_user = current_jwt_auth.jwt_users.where(user_key: user[:uuid]).first
-            self.current_jwt_user = JwtUser.create(jwt_token_id: current_jwt_auth.id,
-                                                 user_key: user[:uuid],
-                                                 name: user[:username],
-                                                 display_name: user[:display_name]) unless current_jwt_user
-            break
+          if user[:username].present? && user[:display_name].present? &&
+              user[:uuid].present? && user[:type].present? && user[:type] == 'user'
+
+            jwt_user = current_jwt_auth.jwt_users.where(user_key: user[:uuid]).first
+            JwtUser.create(jwt_token_id: current_jwt_auth.id,
+                           user_key: user[:uuid],
+                           name: user[:username],
+                           display_name: user[:display_name]) unless jwt_user
           end
         end
       end
@@ -176,8 +176,8 @@ module AtlassianJwtAuthentication
                                                user_key: data['context']['user']['userKey'],
                                                name: data['context']['user']['username'],
                                                display_name: data['context']['user']['displayName']) unless current_jwt_user
-      else
-        self.current_jwt_user = nil
+      elsif params[:user_uuid]
+        self.current_jwt_user = current_jwt_auth.jwt_users.where(user_key: params[:user_uuid]).first
       end
 
       true
