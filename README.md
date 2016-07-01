@@ -125,6 +125,16 @@ pp response.success?
 
 ```
 
+## Installing the add-on
+
+You can use rake tasks to simplify plugin installation:
+
+```ruby
+bin/rails atlassian:install[prefix,username,password,https://external.address.to/descriptor]
+```
+
+Where `prefix` is your instance name before `.atlassian.net`.
+
 ## Requirements
 
 Ruby 2.0+, ActiveRecord 4.1+
