@@ -9,10 +9,16 @@ RSpec.describe AtlassianJwtAuthentication::Helper do
       described_class.send(:public, *described_class.private_instance_methods)
     end
 
-    it { is_expected.to respond_to(:prepare_canonical_query_string) }
+    it 'exists' do
+      is_expected.to respond_to(:prepare_canonical_query_string)
+    end
 
-    it {
+    it 'sorts parameters' do
       expect(subject.prepare_canonical_query_string({test: %w(c b), another: 'old'})).to eq 'another=old&test=b,c'
-    }
+    end
+
+    it 'returns empty string for empty params' do
+      expect(subject.prepare_canonical_query_string({})).to eq ''
+    end
   end
 end
