@@ -27,4 +27,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency('activerecord', '>= 4.1.0')
   s.add_development_dependency('bundler')
   s.add_development_dependency('generator_spec')
+  s.add_development_dependency('rspec')
 end

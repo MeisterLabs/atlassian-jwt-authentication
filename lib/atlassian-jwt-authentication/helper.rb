@@ -27,6 +27,24 @@ module AtlassianJwtAuthentication
       @jwt_user = jwt_user
     end
 
+    def prepare_canonical_query_string(options = {})
+      if options.has_key? :query
+        query = options[:query]
+      else
+        query = options
+      end
+
+      '&'.join query.keys.sorted.map do |key|
+        if query[key].is_a? Enumerable
+          paramValue = ','.join(query.sort.map { |_| Addressable::URI.encode_component(_, Addressable::URI::CharacterClasses::UNRESERVED) })
+        else
+          paramValue = query[key]
+        end
+
+        Addressable::URI.encode_component(key) + '=' + paramValue
+      end
+    end
+
     def rest_api_url(method, endpoint)
       unless current_jwt_auth
         raise 'Missing Authentication context'
@@ -39,10 +57,10 @@ module AtlassianJwtAuthentication
       qsh = Digest::SHA256.hexdigest("#{method.to_s.upcase}&#{endpoint}&")
 
       jwt = JWT.encode({
-                           qsh: qsh,
-                           iat: issued_at,
-                           exp: expires_at,
-                           iss: current_jwt_auth.addon_key
+                         qsh: qsh,
+                         iat: issued_at,
+                         exp: expires_at,
+                         iss: current_jwt_auth.addon_key
                        }, current_jwt_auth.shared_secret)
 
       # return the service call URL with the JWT token added
@@ -51,10 +69,14 @@ module AtlassianJwtAuthentication
 
     def rest_api_call(method, endpoint, data = nil)
       response = HTTParty.send(method, rest_api_url(method, endpoint), {
-          body: data ? data.to_json : nil,
-          headers: {'Content-Type' => 'application/json'}
+        body: data ? data.to_json : nil,
+        headers: {'Content-Type' => 'application/json'}
       })
 
+      to_json_response(response)
+    end
+
+    def to_json_response(response)
       if response.success?
         Response.new(200, JSON::parse(response.body))
       else
