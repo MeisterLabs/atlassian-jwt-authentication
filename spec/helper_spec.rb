@@ -10,5 +10,9 @@ RSpec.describe AtlassianJwtAuthentication::Helper do
     end
 
     it { is_expected.to respond_to(:prepare_canonical_query_string) }
+
+    it {
+      expect(subject.prepare_canonical_query_string({test: %w(c b), another: 'old'})).to eq 'another=old&test=b,c'
+    }
   end
 end

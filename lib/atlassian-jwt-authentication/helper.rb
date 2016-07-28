@@ -1,5 +1,6 @@
 require 'jwt'
 require 'httparty'
+require 'addressable'
 
 module AtlassianJwtAuthentication
   module Helper
@@ -34,15 +35,16 @@ module AtlassianJwtAuthentication
         query = options
       end
 
-      '&'.join query.keys.sorted.map do |key|
+      query.keys.sort.map do |key|
         if query[key].is_a? Enumerable
-          paramValue = ','.join(query.sort.map { |_| Addressable::URI.encode_component(_, Addressable::URI::CharacterClasses::UNRESERVED) })
+          sorted_params = query[key].sort.map { |_| Addressable::URI.encode_component(_, Addressable::URI::CharacterClasses::UNRESERVED) }
+          param_value = sorted_params.join ','
         else
-          paramValue = query[key]
+          param_value = query[key]
         end
 
-        Addressable::URI.encode_component(key) + '=' + paramValue
-      end
+        Addressable::URI.encode_component(key) + '=' + param_value
+      end.join '&'
     end
 
     def rest_api_url(method, endpoint)
