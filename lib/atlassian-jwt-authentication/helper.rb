@@ -28,25 +28,6 @@ module AtlassianJwtAuthentication
       @jwt_user = jwt_user
     end
 
-    def prepare_canonical_query_string(options = {})
-      if options.has_key? :query
-        query = options[:query]
-      else
-        query = options
-      end
-
-      query.keys.sort.map do |key|
-        if query[key].is_a? Enumerable
-          sorted_params = query[key].sort.map { |_| Addressable::URI.encode_component(_, Addressable::URI::CharacterClasses::UNRESERVED) }
-          param_value = sorted_params.join ','
-        else
-          param_value = query[key]
-        end
-
-        Addressable::URI.encode_component(key) + '=' + param_value
-      end.join '&'
-    end
-
     def rest_api_url(method, endpoint)
       unless current_jwt_auth
         raise 'Missing Authentication context'
