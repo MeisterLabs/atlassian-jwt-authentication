@@ -125,6 +125,48 @@ pp response.success?
 
 ```
 
+
+### 4. Preparing service gateways
+
+You can also prepare a service gateway that will encapsulate communication methods with the product. Here's a sample JIRA gateway:
+
+```ruby
+class JiraGateway
+
+  class << self
+    def new(current_jwt_auth, *args)
+      Class.new(AbstractJiraGateway) { |klass|
+        klass.base_uri(current_jwt_auth.api_base_url)
+      }.new(current_jwt_auth, *args)
+    end
+  end
+
+  class AbstractJiraGateway
+    include HTTParty
+    include AtlassianJwtAuthentication::HTTParty
+
+    def initialize(current_jwt_auth)
+      @current_jwt_auth = current_jwt_auth
+    end
+
+    def user(user_key)
+      self.class.get_with_jwt('/rest/api/2/user', {
+        query: {
+          key: user_key
+        },
+        current_jwt_auth: @current_jwt_auth
+      })
+    end
+  end
+end
+```
+
+Then use it in your controller:
+
+```ruby
+JiraGateway.new(current_jwt_auth).user('admin')
+```
+
 ## Installing the add-on
 
 You can use rake tasks to simplify plugin installation:
