@@ -1,8 +1,12 @@
 require 'spec_helper'
 
-RSpec.describe AtlassianJwtAuthentication::Helper do
+RSpec.describe AtlassianJwtAuthentication::HTTParty do
   describe '#prepare_canonical_query_string' do
-    subject { Object.new.extend(described_class) }
+    subject {
+      klass = Class.new
+      klass.instance_eval { include AtlassianJwtAuthentication::HTTParty }
+      klass
+    }
 
     before do
       described_class.send(:public, *described_class.protected_instance_methods)
