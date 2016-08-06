@@ -51,6 +51,8 @@ module AtlassianJwtAuthentication
       end
 
       def prepare_canonical_query_string(query = {})
+        return '' if query.nil?
+
         query.keys.sort.map do |key|
           if query[key].is_a? Enumerable
             sorted_params = query[key].sort.map { |_| Addressable::URI.encode_component(_, Addressable::URI::CharacterClasses::UNRESERVED) }
