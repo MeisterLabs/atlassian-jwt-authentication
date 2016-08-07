@@ -50,15 +50,19 @@ module AtlassianJwtAuthentication
         perform_request(http_method, path, normalize_options(http_method, path, options), &block)
       end
 
-      def prepare_canonical_query_string(query = {})
-        return '' if query.nil?
+      def prepare_canonical_query_string(options = {})
+        all = {}.merge(options.fetch(:query, {}))
 
-        query.keys.sort.map do |key|
-          if query[key].is_a? Enumerable
-            sorted_params = query[key].sort.map { |_| Addressable::URI.encode_component(_, Addressable::URI::CharacterClasses::UNRESERVED) }
+        if options.has_key?(:body) && options[:body].respond_to?(:to_hash)
+          all = all.merge(options.fetch(:body, {}))
+        end
+
+        all.keys.sort.map do |key|
+          if all[key].is_a? Enumerable
+            sorted_params = all[key].sort.map { |_| Addressable::URI.encode_component(_, Addressable::URI::CharacterClasses::UNRESERVED) }
             param_value = sorted_params.join ','
           else
-            param_value = query[key]
+            param_value = Addressable::URI.encode_component(all[key].to_s, Addressable::URI::CharacterClasses::UNRESERVED)
           end
 
           Addressable::URI.encode_component(key) + '=' + param_value
@@ -75,7 +79,7 @@ module AtlassianJwtAuthentication
         issued_at = Time.now.utc.to_i
         expires_at = issued_at + 180
 
-        qsh = "#{method::METHOD.to_s.upcase}&#{endpoint}&#{prepare_canonical_query_string(options[:query])}"
+        qsh = "#{method::METHOD.to_s.upcase}&#{endpoint}&#{prepare_canonical_query_string(options)}"
 
         JWT.encode({
           qsh: Digest::SHA256.hexdigest(qsh),
