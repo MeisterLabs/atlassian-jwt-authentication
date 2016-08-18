@@ -1,5 +1,6 @@
 require 'jwt'
 require 'httparty'
+require 'addressable'
 
 module AtlassianJwtAuthentication
   module Helper
@@ -39,10 +40,10 @@ module AtlassianJwtAuthentication
       qsh = Digest::SHA256.hexdigest("#{method.to_s.upcase}&#{endpoint}&")
 
       jwt = JWT.encode({
-                           qsh: qsh,
-                           iat: issued_at,
-                           exp: expires_at,
-                           iss: current_jwt_auth.addon_key
+                         qsh: qsh,
+                         iat: issued_at,
+                         exp: expires_at,
+                         iss: current_jwt_auth.addon_key
                        }, current_jwt_auth.shared_secret)
 
       # return the service call URL with the JWT token added
@@ -51,10 +52,14 @@ module AtlassianJwtAuthentication
 
     def rest_api_call(method, endpoint, data = nil)
       response = HTTParty.send(method, rest_api_url(method, endpoint), {
-          body: data ? data.to_json : nil,
-          headers: {'Content-Type' => 'application/json'}
+        body: data ? data.to_json : nil,
+        headers: {'Content-Type' => 'application/json'}
       })
 
+      to_json_response(response)
+    end
+
+    def to_json_response(response)
       if response.success?
         Response.new(200, JSON::parse(response.body))
       else
