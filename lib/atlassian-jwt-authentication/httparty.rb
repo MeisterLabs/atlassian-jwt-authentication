@@ -1,5 +1,7 @@
 module AtlassianJwtAuthentication
   module HTTParty
+    include ::HTTParty
+    
     def self.included(base)
       base.extend ClassMethods
     end
