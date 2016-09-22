@@ -57,6 +57,12 @@ Don't forget to run your migrations now!
 The gem provides 2 endpoints for an Atlassian add-on lifecycle, installed and uninstalled. 
 For more information on the available Atlassian lifecycle callbacks visit 
 https://developer.atlassian.com/static/connect/docs/latest/modules/lifecycle.html.
+
+First, require the gem in one of your initializers:
+```ruby
+require 'atlassian_jwt_authentication'
+```
+
 The gem will take care of setting up the necessary JWT tokens upon add-on installation and to
 delete the appropriate tokens upon un-installation. To use this functionality, simply call
  
