@@ -96,7 +96,7 @@ to these 2 instances also on subsequent requests even if they are not JWT signed
 pp current_jwt_auth.addon_key
 
 # current_jwt_user is an instance of JwtUser, so you have access to the Atlassian user information.
-Beware, this information is not present when developing for Bitbucket.
+# Beware, this information is not present when developing for Bitbucket.
 pp current_jwt_user.user_key
 pp current_jwt_user.name
 pp current_jwt_user.display_name
