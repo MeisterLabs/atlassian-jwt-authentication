@@ -63,6 +63,16 @@ First, require the gem in one of your initializers:
 require 'atlassian_jwt_authentication'
 ```
 
+If your add-on baseUrl is not your application root URL then include the following 
+configuration for the context path. This is needed in the query hash string validation 
+step of verifying the JWT:
+```ruby
+# In the add-on descriptor:
+# "baseUrl": "https://www.example.com/atlassian/confluence",
+
+AtlassianJwtAuthentication.context_path = '/atlassian/confluence'
+```
+
 The gem will take care of setting up the necessary JWT tokens upon add-on installation and to
 delete the appropriate tokens upon un-installation. To use this functionality, simply call
  

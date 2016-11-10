@@ -7,4 +7,7 @@ require 'atlassian-jwt-authentication/railtie' if defined?(Rails)
 module AtlassianJwtAuthentication
   include Helper
   include Filters
+
+  mattr_accessor :context_path
+  self.context_path = ''
 end
