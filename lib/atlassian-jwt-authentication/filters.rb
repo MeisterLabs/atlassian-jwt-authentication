@@ -175,7 +175,7 @@ module AtlassianJwtAuthentication
       
       qsh = request.method.upcase + '&' + path + '&' +
           request.query_parameters.
-              without(:jwt).
+              except(:jwt).
               sort.
               map{ |param_pair| ERB::Util.url_encode(param_pair[0]) + '=' + ERB::Util.url_encode(param_pair[1]) }.join('&')
       
