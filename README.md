@@ -73,6 +73,7 @@ step of verifying the JWT:
 AtlassianJwtAuthentication.context_path = '/atlassian/confluence'
 ```
 
+#### 2.1 Add-on installation
 The gem will take care of setting up the necessary JWT tokens upon add-on installation and to
 delete the appropriate tokens upon un-installation. To use this functionality, simply call
  
@@ -82,7 +83,8 @@ include AtlassianJwtAuthentication
 before_action :on_add_on_installed, only: [:installed]
 before_action :on_add_on_uninstalled, only: [:uninstalled]
 ```
- 
+
+#### 2.2 Add-on authentication
 Furthermore, protect the methods that will be JWT aware by using the gem's
 JWT token verification filter. You need to pass your add-on descriptor so that
 the appropriate JWT shared secret can be identified:
@@ -110,6 +112,15 @@ pp current_jwt_auth.addon_key
 pp current_jwt_user.user_key
 pp current_jwt_user.name
 pp current_jwt_user.display_name
+```
+
+#### 2.3 Add-on licensing
+If your add-on has a licensing model you can use the `ensure_license` filter to check for a valid license.
+As with the `verify_jwt` filter, this simply responds with an unauthorized header if there is no valid license
+for the installation.
+
+```ruby
+before_filter :ensure_license
 ```
 
 ### 3. Making a service call
