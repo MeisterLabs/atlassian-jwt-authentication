@@ -122,6 +122,15 @@ for the installation.
 ```ruby
 before_filter :ensure_license
 ```
+If your add-on was for free and you're just adding licensing now, you can specify
+the version at which you started charging, ie. the minimum version of the add-on
+for which you require a valid license. Simply include the code below with your version
+string in the controller that includes the other add-on code.
+```ruby
+def min_licensing_version
+  Gem::Version.new('1.0.0')
+end
+```
 
 ### 3. Making a service call
 

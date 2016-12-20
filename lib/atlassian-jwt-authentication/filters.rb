@@ -81,21 +81,30 @@ module AtlassianJwtAuthentication
     end
 
     def ensure_license
-      unless params[:lic] && params[:lic] == 'active'
-        head(:unauthorized)
-        return false
-      end
-
       unless current_jwt_auth
         raise 'current_jwt_auth missing, add the verify_jwt filter'
       end
 
       response = rest_api_call(:get, "/rest/atlassian-connect/1/addons/#{current_jwt_auth.addon_key}")
-      unless response.success? && response.data &&
-          response.data['state'] == 'ENABLED' &&
-          response.data['license'] && response.data['license']['active']
+      unless response.success? && response.data
         head(:unauthorized)
         return false
+      end
+
+      current_version = Gem::Version.new(response.data['version'])
+
+      if min_licensing_version && current_version > min_licensing_version || !min_licensing_version
+        # do we need to check for licensing on this add-on version?
+        unless params[:lic] && params[:lic] == 'active'
+          head(:unauthorized)
+          return false
+        end
+
+        unless response.data['state'] == 'ENABLED' &&
+            response.data['license'] && response.data['license']['active']
+          head(:unauthorized)
+          return false
+        end
       end
 
       true
@@ -236,8 +245,14 @@ module AtlassianJwtAuthentication
       }
     end
 
+    # This can be overwritten in the including controller
     def exclude_qsh_params
       []
+    end
+
+    # This can be overwritten in the including controller
+    def min_licensing_version
+      nil
     end
   end
 end
