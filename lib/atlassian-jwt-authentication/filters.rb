@@ -28,6 +28,11 @@ module AtlassianJwtAuthentication
       if jwt_auth
         # The add-on was previously installed on this client
         return false unless _verify_jwt(addon_key)
+        if jwt_auth.id != current_jwt_auth.id
+          # Update request was issued to another plugin
+          head(:forbidden)
+          return false
+        end
       else
         self.current_jwt_auth = JwtToken.new(jwt_token_params)
       end
