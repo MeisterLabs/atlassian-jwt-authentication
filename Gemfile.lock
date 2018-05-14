@@ -39,7 +39,7 @@ GEM
     arel (7.1.0)
     builder (3.2.2)
     concurrent-ruby (1.0.5)
-    crass (1.0.3)
+    crass (1.0.4)
     diff-lcs (1.2.5)
     erubis (2.7.0)
     generator_spec (0.9.3)
@@ -66,8 +66,8 @@ GEM
     rails-dom-testing (2.0.3)
       activesupport (>= 4.2.0)
       nokogiri (>= 1.6)
-    rails-html-sanitizer (1.0.3)
-      loofah (~> 2.0)
+    rails-html-sanitizer (1.0.4)
+      loofah (~> 2.2, >= 2.2.2)
     railties (5.0.0)
       actionpack (= 5.0.0)
       activesupport (= 5.0.0)
@@ -106,4 +106,4 @@ DEPENDENCIES
   rspec
 
 BUNDLED WITH
-   1.16.0
+   1.16.1
