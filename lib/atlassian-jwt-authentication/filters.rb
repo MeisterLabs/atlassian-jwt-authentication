@@ -144,7 +144,9 @@ module AtlassianJwtAuthentication
       end
 
       # Decode the JWT parameter without verification
-      decoded = JWT.decode(jwt, nil, false)
+      verify_expiration = ENV.fetch('JWT_VERIFY_EXPIRATION', 'true') != 'false'
+
+      decoded = JWT.decode(jwt, nil, false, {verify_expiration: verify_expiration})
 
       # Extract the data
       data = decoded[0]
@@ -171,7 +173,7 @@ module AtlassianJwtAuthentication
       # The JWT gem has changed the way you can access the decoded segments in v 1.5.5, we just handle both.
       if JWT.const_defined?(:Decode)
         options = {
-            verify_expiration: true,
+            verify_expiration: verify_expiration,
             verify_not_before: true,
             verify_iss: false,
             verify_iat: false,
