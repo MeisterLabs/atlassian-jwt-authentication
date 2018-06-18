@@ -92,11 +92,23 @@ module AtlassianJwtAuthentication
       end
 
       def normalize_options(http_method, path, options)
-        options.merge({
-          query: options.fetch(:query, {}).merge({
-            jwt: prepare_jwt_token(http_method, path, options)
-          })
-        })
+        if options[:user_key]
+          user_bearer = AtlassianJwtAuthentication::UserBearerToken::user_bearer_token(
+            options[:current_jwt_auth],
+            options[:user_key],
+            [])["access_token"]
+          options.merge(
+            headers: options.fetch(:headers, {}).merge(
+              authorization: "Bearer #{user_bearer}"
+            )
+          )
+        else
+          options.merge(
+            query: options.fetch(:query, {}).merge(
+              jwt: prepare_jwt_token(http_method, path, options)
+            )
+          )
+        end
       end
     end
   end

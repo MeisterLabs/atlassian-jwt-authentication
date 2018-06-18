@@ -170,10 +170,13 @@ You can also prepare a service gateway that will encapsulate communication metho
 class JiraGateway
 
   class << self
-    def new(current_jwt_auth, *args)
-      Class.new(AbstractJiraGateway) { |klass|
-        klass.base_uri(current_jwt_auth.api_base_url)
-      }.new(current_jwt_auth, *args)
+    def new(current_jwt_auth, user_key = nil)
+      Class.new(AbstractJiraGateway) do |klass|
+        klass.base_uri(
+          current_jwt_auth.respond_to?(:api_base_url) ?
+            current_jwt_auth.api_base_url :
+            current_jwt_auth.base_url)
+      end.new(current_jwt_auth, user_key)
     end
   end
 
@@ -181,8 +184,9 @@ class JiraGateway
     include HTTParty
     include AtlassianJwtAuthentication::HTTParty
 
-    def initialize(current_jwt_auth)
+    def initialize(current_jwt_auth, user_key = nil)
       @current_jwt_auth = current_jwt_auth
+      @user_key = user_key
     end
 
     def user(user_key)
@@ -190,7 +194,8 @@ class JiraGateway
         query: {
           key: user_key
         },
-        current_jwt_auth: @current_jwt_auth
+        current_jwt_auth: @current_jwt_auth,
+        user_key: @user_key,
       })
     end
   end
@@ -202,6 +207,18 @@ Then use it in your controller:
 ```ruby
 JiraGateway.new(current_jwt_auth).user('admin')
 ```
+
+### 5. User impersonification
+
+To make requests on user's behalf use `act_as_user` in scopes then obtain [OAuth bearer token](https://developer.atlassian.com/cloud/jira/software/oauth-2-jwt-bearer-token-authorization-grant-type/) from Atlassian.
+
+You can do that easily using `JiraGateway` presented above, just pass `user_key` of the user you want to act on behalf of:
+
+```ruby
+JiraGateway.new(current_jwt_auth, 'user_key').add_worklog(issue.key, '1m')
+``` 
+
+`AtlassianJwtAuthentication::HTTParty` will detect presence of `user_key` and obtain OAuth token automatically, tokens are cached using `Rails.cache`, check `lib/atlassian-jwt-authentication/user_bearer_token.rb` 
 
 ## Installing the add-on
 
