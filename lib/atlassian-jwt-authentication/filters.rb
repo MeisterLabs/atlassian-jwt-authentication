@@ -42,6 +42,9 @@ module AtlassianJwtAuthentication
       current_jwt_auth.product_type = "atlassian:#{product_type}"
       current_jwt_auth.base_url = base_url if current_jwt_auth.respond_to?(:base_url)
       current_jwt_auth.api_base_url = api_base_url if current_jwt_auth.respond_to?(:api_base_url)
+      current_jwt_auth.oauth_client_id = params[:oauthClientId] if current_jwt_auth.respond_to?(:oauth_client_id)
+      current_jwt_auth.public_key = params[:publicKey] if current_jwt_auth.respond_to?(:public_key)
+      current_jwt_auth.payload = params.to_unsafe_h if current_jwt_auth.respond_to?(:payload)
 
       current_jwt_auth.save!
 
