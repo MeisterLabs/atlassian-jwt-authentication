@@ -28,6 +28,10 @@ module AtlassianJwtAuthentication
       @jwt_user = jwt_user
     end
 
+    def user_bearer_token(user_key, scopes)
+      AtlassianJwtAuthentication::UserBearerToken::user_bearer_token(current_jwt_auth, user_key, scopes)
+    end
+
     def rest_api_url(method, endpoint)
       unless current_jwt_auth
         raise 'Missing Authentication context'
@@ -40,11 +44,11 @@ module AtlassianJwtAuthentication
       qsh = Digest::SHA256.hexdigest("#{method.to_s.upcase}&#{endpoint}&")
 
       jwt = JWT.encode({
-                         qsh: qsh,
-                         iat: issued_at,
-                         exp: expires_at,
-                         iss: current_jwt_auth.addon_key
-                       }, current_jwt_auth.shared_secret)
+        qsh: qsh,
+        iat: issued_at,
+        exp: expires_at,
+        iss: current_jwt_auth.addon_key
+      }, current_jwt_auth.shared_secret)
 
       # return the service call URL with the JWT token added
       "#{current_jwt_auth.api_base_url}#{endpoint}?jwt=#{jwt}"
