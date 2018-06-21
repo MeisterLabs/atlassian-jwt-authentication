@@ -153,8 +153,17 @@ module AtlassianJwtAuthentication
       encoding_data = decoded[1]
 
       # Find a matching JWT token in the DB
+      client_key = data['iss']
+
+      # The audience claim identifies the intended recipient, according to the JWT spec,
+      # but we still allow the issuer to be used if 'aud' is missing.
+      # Session JWTs make use of this (the issuer is the add-on in this case)
+      if data['aud'] && data['aud'].size > 0
+        client_key = data['aud'][0]
+      end
+
       jwt_auth = JwtToken.where(
-          client_key: data['iss'],
+          client_key: client_key,
           addon_key: addon_key
       ).first
 
@@ -201,29 +210,31 @@ module AtlassianJwtAuthentication
         return false
       end
 
-      # Verify the query has not been tampered by Creating a Query Hash and
-      # comparing it against the qsh claim on the verified token
-      if jwt_auth.base_url.present? && request.url.include?(jwt_auth.base_url)
-        path = request.url.gsub(jwt_auth.base_url, '')
-      else
-        path = request.path.gsub(context_path, '')
-      end
-      path = '/' if path.empty?
+      if data['qsh']
+        # Verify the query has not been tampered by Creating a Query Hash and
+        # comparing it against the qsh claim on the verified token
+        if jwt_auth.base_url.present? && request.url.include?(jwt_auth.base_url)
+          path = request.url.gsub(jwt_auth.base_url, '')
+        else
+          path = request.path.gsub(context_path, '')
+        end
+        path = '/' if path.empty?
 
-      qsh_parameters = request.query_parameters.
-          except(:jwt)
+        qsh_parameters = request.query_parameters.
+            except(:jwt)
 
-      exclude_qsh_params.each { |param_name| qsh_parameters = qsh_parameters.except(param_name) }
+        exclude_qsh_params.each { |param_name| qsh_parameters = qsh_parameters.except(param_name) }
 
-      qsh = request.method.upcase + '&' + path + '&' +
-          qsh_parameters.
-              sort.
-              map{ |param_pair| ERB::Util.url_encode(param_pair[0]) + '=' + ERB::Util.url_encode(param_pair[1]) }.join('&')
-      qsh = Digest::SHA256.hexdigest(qsh)
+        qsh = request.method.upcase + '&' + path + '&' +
+            qsh_parameters.
+                sort.
+                map{ |param_pair| ERB::Util.url_encode(param_pair[0]) + '=' + ERB::Util.url_encode(param_pair[1]) }.join('&')
+        qsh = Digest::SHA256.hexdigest(qsh)
 
-      unless data['qsh'] == qsh
-        head(:unauthorized)
-        return
+        unless data['qsh'] == qsh
+          head(:unauthorized)
+          return
+        end
       end
 
       self.current_jwt_auth = jwt_auth
