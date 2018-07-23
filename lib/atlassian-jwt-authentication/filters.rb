@@ -55,11 +55,14 @@ module AtlassianJwtAuthentication
           if user[:username].present? && user[:display_name].present? &&
               user[:uuid].present? && user[:type].present? && user[:type] == 'user'
 
-            jwt_user = current_jwt_auth.jwt_users.where(user_key: user[:uuid]).first
-            JwtUser.create(jwt_token_id: current_jwt_auth.id,
-                           user_key: user[:uuid],
-                           name: user[:username],
-                           display_name: user[:display_name]) unless jwt_user
+            jwt_user = current_jwt_auth.jwt_users.find_or_initialize_by(user_key: user[:uuid]) do |jwt_user|
+              jwt_user.name = user[:username]
+              jwt_user.display_name = user[:display_name]
+            end
+
+            jwt_user.update!(
+              name: user[:username],
+              display_name: user[:display_name])
           end
         end
       end
