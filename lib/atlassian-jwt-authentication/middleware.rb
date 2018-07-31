@@ -3,6 +3,9 @@ module AtlassianJwtAuthentication
     class VerifyJwtToken
       PREFIX = 'atlassian_jwt_authentication'.freeze
 
+      JWT_TOKEN_HEADER = "#{PREFIX}.jwt_token".freeze
+      JWT_USER_HEADER = "#{PREFIX}.jwt_user".freeze
+
       def initialize(app, addon_key)
         @app = app
         @addon_key = addon_key
@@ -22,11 +25,11 @@ module AtlassianJwtAuthentication
           jwt_auth, jwt_user = Verify.verify_jwt(@addon_key, jwt, request, [])
 
           if jwt_auth
-            request.set_header("#{PREFIX}.jwt_token", jwt_auth)
+            request.set_header(JWT_TOKEN_HEADER, jwt_auth)
           end
 
           if jwt_user
-            request.set_header("#{PREFIX}.jwt_user", jwt_user)
+            request.set_header(JWT_USER_HEADER, jwt_user)
           end
         end
 
