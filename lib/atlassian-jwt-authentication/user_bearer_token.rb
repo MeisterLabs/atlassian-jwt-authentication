@@ -2,7 +2,7 @@ module AtlassianJwtAuthentication
   module UserBearerToken
     def self.user_bearer_token(current_jwt_auth, account_id, scopes)
       scopes_key = (scopes || []).map(&:downcase).sort.uniq.join(',')
-      cache_key = "user/#{account_id}:scopes:/#{scopes_key}"
+      cache_key = "jwt_token/#{current_jwt_auth.id}/user/#{account_id}:scopes:/#{scopes_key}"
 
       read_from_cache = ->(refresh = false) do
         Rails.cache.fetch(cache_key, force: refresh) do
