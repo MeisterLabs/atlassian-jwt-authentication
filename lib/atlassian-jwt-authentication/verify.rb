@@ -81,7 +81,15 @@ module AtlassianJwtAuthentication
         qsh = request.method.upcase + '&' + path + '&' +
           qsh_parameters.
             sort.
-            map{ |param_pair| ERB::Util.url_encode(param_pair[0]) + '=' + ERB::Util.url_encode(param_pair[1]) }.join('&')
+            map { |(key, value)|
+              if value.respond_to?(:to_query)
+                value.to_query(key)
+              else
+                ERB::Util.url_encode(key) + '=' + ERB::Util.url_encode(value)
+              end
+            }.
+            join('&')
+
         qsh = Digest::SHA256.hexdigest(qsh)
 
         unless data['qsh'] == qsh
