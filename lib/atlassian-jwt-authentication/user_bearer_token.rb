@@ -7,13 +7,13 @@ module AtlassianJwtAuthentication
       read_from_cache = ->(refresh = false) do
         Rails.cache.fetch(cache_key, force: refresh) do
           AtlassianJwtAuthentication::Oauth2::get_access_token(current_jwt_auth, account_id, scopes).tap do |token_details|
-            token_details["expires_at"] = token_details["expires_at"] - 3.seconds # some leeway
+            token_details["expires_at"] = Time.now.utc.to_i + token_details["expires_in"] - 3.seconds # some leeway
           end
         end
       end
 
       access_token = read_from_cache.call(false)
-      if access_token["expires_at"] > Time.now.utc.to_i
+      if access_token["expires_at"] <= Time.now.utc.to_i
         access_token = read_from_cache.call(true)
       end
       access_token
