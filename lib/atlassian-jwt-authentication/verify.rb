@@ -98,15 +98,16 @@ module AtlassianJwtAuthentication
         # Has this user accessed our add-on before?
         # If not, create a new JwtUser
 
-        jwt_user = JwtUser.find_or_initialize_by(jwt_token_id: jwt_auth.id,
-          user_key: data['context']['user']['userKey']) do |user|
-          user.name = data['context']['user']['username']
-          user.display_name = data['context']['user']['displayName']
+        context_user = data['context']['user']
+        jwt_user = JwtUser.find_or_initialize_by(jwt_token_id: jwt_auth.id, user_key: context_user['userKey']) do |user|
+          user.name = context_user['username']
+          user.display_name = context_user['displayName']
+          user.account_id = context_user['accountId']
         end
 
         jwt_user.update!(
-          name: data['context']['user']['username'],
-          display_name: data['context']['user']['displayName']
+          name: context_user['username'],
+          display_name: context_user['displayName']
         )
       elsif request.params[:user_uuid]
         jwt_user = jwt_auth.jwt_users.find_by(user_key: request.params[:user_uuid])
