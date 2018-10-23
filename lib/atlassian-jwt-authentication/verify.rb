@@ -107,7 +107,8 @@ module AtlassianJwtAuthentication
 
         jwt_user.update!(
           name: context_user['username'],
-          display_name: context_user['displayName']
+          display_name: context_user['displayName'],
+          account_id: jwt_user.account_id ? jwt_user.account_id : context_user['accountId']
         )
       elsif request.params[:user_uuid]
         jwt_user = jwt_auth.jwt_users.find_by(user_key: request.params[:user_uuid])
