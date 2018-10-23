@@ -210,6 +210,10 @@ bin/rails atlassian:install[prefix,username,password,https://external.address.to
 
 Where `prefix` is your instance name before `.atlassian.net`.
 
+## Environment variables
+
+`JWT_VERIFY_EXPIRATION=false` - allow expired tokens, speeds up development, espesially combined with webpack hot module reloading. 
+
 ## Requirements
 
 Ruby 2.0+, ActiveRecord 4.1+
