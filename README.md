@@ -210,9 +210,12 @@ bin/rails atlassian:install[prefix,username,password,https://external.address.to
 
 Where `prefix` is your instance name before `.atlassian.net`.
 
-## Environment variables
+## Configuration
 
-`JWT_VERIFY_EXPIRATION=false` - allow expired tokens, speeds up development, espesially combined with webpack hot module reloading. 
+Config | Environment variable | Description | Default |
+------ | -------------------- | ----------- | ------- |
+`AtlassianJwtAuthentication.context_path` | none | server path your app is running at | `''` 
+`AtlassianJwtAuthentication.verify_jwt_expiration` | `JWT_VERIFY_EXPIRATION` | when `false` allow expired tokens, speeds up development, especially combined with webpack hot module reloading | `true` 
 
 ## Requirements
 
