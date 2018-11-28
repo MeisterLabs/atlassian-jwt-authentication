@@ -158,7 +158,6 @@ pp response.success?
 ```
 
 
-
 ### 4. Preparing service gateways
 
 You can also prepare a service gateway that will encapsulate communication methods with the product. Here's a sample JIRA gateway:
