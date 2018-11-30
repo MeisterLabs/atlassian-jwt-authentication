@@ -1,0 +1,1 @@
+require 'atlassian_jwt_authentication'

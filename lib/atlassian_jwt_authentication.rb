@@ -10,4 +10,8 @@ module AtlassianJwtAuthentication
 
   mattr_accessor :context_path
   self.context_path = ''
+
+  # Decode the JWT parameter without verification
+  mattr_accessor :verify_jwt_expiration
+  self.verify_jwt_expiration = ENV.fetch('JWT_VERIFY_EXPIRATION', 'true') != 'false'
 end
