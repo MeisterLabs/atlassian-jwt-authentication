@@ -13,9 +13,10 @@ You can check out the latest source from git:
 
 Or, if you're using Bundler, just add the following to your Gemfile:
 
-    gem 'atlassian-jwt-authentication', 
-                    git: 'https://github.com/MeisterLabs/atlassian-jwt-authentication.git', 
-                    require: 'atlassian_jwt_authentication'
+```ruby
+gem 'atlassian-jwt-authentication', 
+  git: 'https://github.com/MeisterLabs/atlassian-jwt-authentication.git'
+```
 
 ## Usage
 
@@ -57,11 +58,6 @@ Don't forget to run your migrations now!
 The gem provides 2 endpoints for an Atlassian add-on lifecycle, installed and uninstalled. 
 For more information on the available Atlassian lifecycle callbacks visit 
 https://developer.atlassian.com/static/connect/docs/latest/modules/lifecycle.html.
-
-First, require the gem in one of your initializers:
-```ruby
-require 'atlassian_jwt_authentication'
-```
 
 If your add-on baseUrl is not your application root URL then include the following 
 configuration for the context path. This is needed in the query hash string validation 
@@ -212,6 +208,13 @@ bin/rails atlassian:install[prefix,username,password,https://external.address.to
 ```
 
 Where `prefix` is your instance name before `.atlassian.net`.
+
+## Configuration
+
+Config | Environment variable | Description | Default |
+------ | -------------------- | ----------- | ------- |
+`AtlassianJwtAuthentication.context_path` | none | server path your app is running at | `''` 
+`AtlassianJwtAuthentication.verify_jwt_expiration` | `JWT_VERIFY_EXPIRATION` | when `false` allow expired tokens, speeds up development, especially combined with webpack hot module reloading | `true` 
 
 ## Requirements
 
