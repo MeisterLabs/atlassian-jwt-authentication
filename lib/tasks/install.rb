@@ -4,7 +4,14 @@ namespace :atlassian do
     require 'faraday'
     require 'json'
 
-    def check_status(prefix, auth, status)
+    connection =
+      Faraday.new("https://#{args.prefix}.atlassian.net") do |f|
+        f.response :logger if ENV['FARADAY_DEBUG'] == 'true'
+        f.basic_auth args.username, args.password
+        f.adapter Faraday.default_adapter
+      end
+
+    def check_status(connection, status)
       if status['userInstalled']
         puts 'Plugin was successfully installed'
 
@@ -20,37 +27,29 @@ namespace :atlassian do
         puts "waiting #{wait_for} seconds for plugin to load..."
         sleep(wait_for)
 
-        response = Faraday.get("https://#{prefix}.atlassian.net/#{status['links']['self']}", {
-            basic_auth: auth
-        })
+        response = connection.get(status['links']['self'])
 
         if response.status == 303
           puts 'Plugin was successfully installed'
           return
         end
 
-        check_status(prefix, auth, JSON.parse(response.body))
+        check_status(connection, JSON.parse(response.body))
       end
     end
 
-    auth = {username: args.username, password: args.password}
-    response = Faraday.get("https://#{args.prefix}.atlassian.net/rest/plugins/1.0/", {basic_auth: auth})
+    response = connection.get("/rest/plugins/1.0/")
     if response.success?
       token = response.headers['upm-token']
 
-      response = Faraday.post("https://#{args.prefix}.atlassian.net/rest/plugins/1.0/",
-                               {
-                                   query: {token: token},
-                                   basic_auth: auth,
-                                   headers: {
-                                       'Content-Type' => 'application/vnd.atl.plugins.remote.install+json'
-                                   },
-                                   body: {pluginUri: args.descriptor_url}.to_json
-                               })
+      response = connection.post("/rest/plugins/1.0/", {pluginUri: args.descriptor_url}.to_json, 'Content-Type' => 'application/vnd.atl.plugins.remote.install+json') do |req|
+        req.params['token'] = token
+      end
+
       payload = JSON.parse(response.body)
-      check_status(args.prefix, auth, payload)
+      check_status(connection, payload)
     else
-      puts "Cannot get UPM token: #{response.code}"
+      puts "Cannot get UPM token: #{response.status}"
     end
   end
 end
