@@ -27,8 +27,8 @@ module AtlassianJwtAuthentication
       @jwt_user = jwt_user
     end
 
-    def user_bearer_token(user_key, scopes)
-      AtlassianJwtAuthentication::UserBearerToken::user_bearer_token(current_jwt_auth, user_key, scopes)
+    def user_bearer_token(account_id, scopes)
+      AtlassianJwtAuthentication::UserBearerToken::user_bearer_token(current_jwt_auth, account_id, scopes)
     end
 
     def rest_api_url(method, endpoint)

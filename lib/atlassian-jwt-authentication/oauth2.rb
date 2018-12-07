@@ -6,10 +6,10 @@ module AtlassianJwtAuthentication
     GRANT_TYPE = "urn:ietf:params:oauth:grant-type:jwt-bearer"
     SCOPE_SEPARATOR = ' '
 
-    def self.get_access_token(current_jwt_auth, user_key, scopes = nil)
+    def self.get_access_token(current_jwt_auth, account_id, scopes = nil)
       form_data = {
         grant_type: GRANT_TYPE,
-        assertion: prepare_jwt_token(current_jwt_auth, user_key)
+        assertion: prepare_jwt_token(current_jwt_auth, account_id)
       }
 
       if scopes
@@ -22,12 +22,12 @@ module AtlassianJwtAuthentication
       JSON.parse(response.body)
     end
 
-    def self.prepare_jwt_token(current_jwt_auth, user_key)
+    def self.prepare_jwt_token(current_jwt_auth, account_id)
       unless current_jwt_auth
         raise 'Missing Authentication context'
       end
 
-      unless user_key
+      unless account_id
         raise 'Missing User key'
       end
 
@@ -37,7 +37,7 @@ module AtlassianJwtAuthentication
 
       JWT.encode({
         iss: JWT_CLAIM_PREFIX + ":clientid:" + current_jwt_auth.oauth_client_id,
-        sub: JWT_CLAIM_PREFIX + ":userkey:" + user_key,
+        sub: JWT_CLAIM_PREFIX + ":useraccountid:" + account_id,
         tnt: current_jwt_auth.base_url,
         aud: AUTHORIZATION_SERVER_URL,
         iat: issued_at,

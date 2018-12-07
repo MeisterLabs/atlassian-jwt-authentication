@@ -159,15 +159,11 @@ pp response.success?
 
 ### 5. User impersonification
 
-To make requests on user's behalf use `act_as_user` in scopes then obtain [OAuth bearer token](https://developer.atlassian.com/cloud/jira/software/oauth-2-jwt-bearer-token-authorization-grant-type/) from Atlassian.
+To make requests on user's behalf add `act_as_user` in scopes required by your app. 
 
-You can do that easily using `JiraGateway` presented above, just pass `user_key` of the user you want to act on behalf of:
+Later you can obtain [OAuth bearer token](https://developer.atlassian.com/cloud/jira/software/oauth-2-jwt-bearer-token-authorization-grant-type/) from Atlassian.
 
-```ruby
-JiraGateway.new(current_jwt_auth, 'user_key').add_worklog(issue.key, '1m')
-``` 
-
-`AtlassianJwtAuthentication::HTTParty` will detect presence of `user_key` and obtain OAuth token automatically, tokens are cached using `Rails.cache`, check `lib/atlassian-jwt-authentication/user_bearer_token.rb` 
+Do that using `AtlassianJwtAuthentication::UserBearerToken.user_bearer_token(account_id, scopes)` 
 
 ## Installing the add-on
 
