@@ -1,5 +1,4 @@
 require 'jwt'
-require 'httparty'
 require 'addressable'
 
 module AtlassianJwtAuthentication
@@ -55,7 +54,7 @@ module AtlassianJwtAuthentication
     end
 
     def rest_api_call(method, endpoint, data = nil)
-      response = HTTParty.send(method, rest_api_url(method, endpoint), {
+      response = Faraday.send(method, rest_api_url(method, endpoint), {
         body: data ? data.to_json : nil,
         headers: {'Content-Type' => 'application/json'}
       })
@@ -67,7 +66,7 @@ module AtlassianJwtAuthentication
       if response.success?
         Response.new(200, JSON::parse(response.body))
       else
-        Response.new(response.code)
+        Response.new(response.status)
       end
     end
 

@@ -137,7 +137,7 @@ Both require the method and the endpoint that you need to access:
 ```ruby
 # Get available project types
 url = rest_api_url(:get, '/rest/api/2/project/type')
-response = HTTParty.get(url)
+response = Faraday.get(url)
 
 # Create an issue
 data = {
@@ -155,53 +155,6 @@ data = {
 response = rest_api_call(:post, '/rest/api/2/issue', data)
 pp response.success?
 
-```
-
-
-### 4. Preparing service gateways
-
-You can also prepare a service gateway that will encapsulate communication methods with the product. Here's a sample JIRA gateway:
-
-```ruby
-class JiraGateway
-
-  class << self
-    def new(current_jwt_auth, user_key = nil)
-      Class.new(AbstractJiraGateway) do |klass|
-        klass.base_uri(
-          current_jwt_auth.respond_to?(:api_base_url) ?
-            current_jwt_auth.api_base_url :
-            current_jwt_auth.base_url)
-      end.new(current_jwt_auth, user_key)
-    end
-  end
-
-  class AbstractJiraGateway
-    include HTTParty
-    include AtlassianJwtAuthentication::HTTParty
-
-    def initialize(current_jwt_auth, user_key = nil)
-      @current_jwt_auth = current_jwt_auth
-      @user_key = user_key
-    end
-
-    def user(user_key)
-      self.class.get_with_jwt('/rest/api/2/user', {
-        query: {
-          key: user_key
-        },
-        current_jwt_auth: @current_jwt_auth,
-        user_key: @user_key,
-      })
-    end
-  end
-end
-```
-
-Then use it in your controller:
-
-```ruby
-JiraGateway.new(current_jwt_auth).user('admin')
 ```
 
 ### 5. User impersonification

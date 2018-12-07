@@ -16,7 +16,10 @@ module AtlassianJwtAuthentication
         form_data[:scopes] = scopes.join(SCOPE_SEPARATOR).upcase
       end
 
-      HTTParty.post(AUTHORIZATION_SERVER_URL + "/oauth2/token", body: form_data).parsed_response
+      response = Faraday.post(AUTHORIZATION_SERVER_URL + "/oauth2/token", body: form_data)
+      raise "Request failed with #{response.status}" unless response.success?
+
+      JSON.parse(response.body)
     end
 
     def self.prepare_jwt_token(current_jwt_auth, user_key)

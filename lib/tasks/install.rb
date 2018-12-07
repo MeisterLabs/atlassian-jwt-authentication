@@ -1,7 +1,7 @@
 namespace :atlassian do
   desc 'Install plugin descriptor into Atlassian Cloud product'
   task :install, :prefix, :username, :password, :descriptor_url do |task, args|
-    require 'httparty'
+    require 'faraday'
     require 'json'
 
     def check_status(prefix, auth, status)
@@ -20,11 +20,11 @@ namespace :atlassian do
         puts "waiting #{wait_for} seconds for plugin to load..."
         sleep(wait_for)
 
-        response = HTTParty.get("https://#{prefix}.atlassian.net/#{status['links']['self']}", {
+        response = Faraday.get("https://#{prefix}.atlassian.net/#{status['links']['self']}", {
             basic_auth: auth
         })
 
-        if response.code == 303
+        if response.status == 303
           puts 'Plugin was successfully installed'
           return
         end
@@ -34,11 +34,11 @@ namespace :atlassian do
     end
 
     auth = {username: args.username, password: args.password}
-    response = HTTParty.get("https://#{args.prefix}.atlassian.net/rest/plugins/1.0/", {basic_auth: auth})
+    response = Faraday.get("https://#{args.prefix}.atlassian.net/rest/plugins/1.0/", {basic_auth: auth})
     if response.success?
       token = response.headers['upm-token']
 
-      response = HTTParty.post("https://#{args.prefix}.atlassian.net/rest/plugins/1.0/",
+      response = Faraday.post("https://#{args.prefix}.atlassian.net/rest/plugins/1.0/",
                                {
                                    query: {token: token},
                                    basic_auth: auth,
