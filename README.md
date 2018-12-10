@@ -181,6 +181,8 @@ Config | Environment variable | Description | Default |
 ------ | -------------------- | ----------- | ------- |
 `AtlassianJwtAuthentication.context_path` | none | server path your app is running at | `''` 
 `AtlassianJwtAuthentication.verify_jwt_expiration` | `JWT_VERIFY_EXPIRATION` | when `false` allow expired tokens, speeds up development, especially combined with webpack hot module reloading | `true` 
+`AtlassianJwtAuthentication.log_requests` | `AJA_LOG_REQUESTS` | when `true` outgoing HTTP requests will be logged | `false` 
+`AtlassianJwtAuthentication.debug_requests` | `AJA_DEBUG_REQUESTS` | when `true` HTTP requests will include body content, implicitly turns on `log_requests` | `false` 
 
 ## Requirements
 

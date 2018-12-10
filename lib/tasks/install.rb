@@ -1,3 +1,5 @@
+require 'atlassian-jwt-authentication/http_client'
+
 namespace :atlassian do
   desc 'Install plugin descriptor into Atlassian Cloud product'
   task :install, :prefix, :username, :password, :descriptor_url do |task, args|
@@ -5,10 +7,8 @@ namespace :atlassian do
     require 'json'
 
     connection =
-      Faraday.new("https://#{args.prefix}.atlassian.net") do |f|
-        f.response :logger if ENV['FARADAY_DEBUG'] == 'true'
+      AtlassianJwtAuthentication::HttpClient.new("https://#{args.prefix}.atlassian.net") do |f|
         f.basic_auth args.username, args.password
-        f.adapter Faraday.default_adapter
       end
 
     def check_status(connection, status)

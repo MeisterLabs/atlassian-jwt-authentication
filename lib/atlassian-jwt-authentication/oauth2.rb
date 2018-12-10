@@ -1,3 +1,5 @@
+require_relative './http_client'
+
 module AtlassianJwtAuthentication
   module Oauth2
     EXPIRE_IN_SECONDS = 60
@@ -7,16 +9,14 @@ module AtlassianJwtAuthentication
     SCOPE_SEPARATOR = ' '
 
     def self.get_access_token(current_jwt_auth, account_id, scopes = nil)
-      form_data = {
-        grant_type: GRANT_TYPE,
-        assertion: prepare_jwt_token(current_jwt_auth, account_id)
-      }
+      response = HttpClient.new.post(AUTHORIZATION_SERVER_URL + "/oauth2/token") do |request|
+        request.params["grant_type"] = GRANT_TYPE
+        request.params["assertion"] = prepare_jwt_token(current_jwt_auth, account_id)
 
-      if scopes
-        form_data[:scopes] = scopes.join(SCOPE_SEPARATOR).upcase
+        if scopes
+          request.params["scopes"] = scopes.join(SCOPE_SEPARATOR).upcase
+        end
       end
-
-      response = Faraday.post(AUTHORIZATION_SERVER_URL + "/oauth2/token", body: form_data)
       raise "Request failed with #{response.status}" unless response.success?
 
       JSON.parse(response.body)
