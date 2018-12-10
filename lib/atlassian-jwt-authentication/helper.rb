@@ -1,6 +1,8 @@
 require 'jwt'
 require 'addressable'
 
+require_relative './http_client'
+
 module AtlassianJwtAuthentication
   module Helper
     protected
@@ -54,7 +56,7 @@ module AtlassianJwtAuthentication
     end
 
     def rest_api_call(method, endpoint, data = nil)
-      response = Faraday.send(method, rest_api_url(method, endpoint), {
+      response = HttpClient.new.send(method, rest_api_url(method, endpoint), {
         body: data ? data.to_json : nil,
         headers: {'Content-Type' => 'application/json'}
       })
