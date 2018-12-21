@@ -1,6 +1,7 @@
 require 'jwt'
-require 'httparty'
 require 'addressable'
+
+require_relative './http_client'
 
 module AtlassianJwtAuthentication
   module Helper
@@ -28,6 +29,10 @@ module AtlassianJwtAuthentication
       @jwt_user = jwt_user
     end
 
+    def user_bearer_token(account_id, scopes)
+      AtlassianJwtAuthentication::UserBearerToken::user_bearer_token(current_jwt_auth, account_id, scopes)
+    end
+
     def rest_api_url(method, endpoint)
       unless current_jwt_auth
         raise 'Missing Authentication context'
@@ -40,18 +45,18 @@ module AtlassianJwtAuthentication
       qsh = Digest::SHA256.hexdigest("#{method.to_s.upcase}&#{endpoint}&")
 
       jwt = JWT.encode({
-                         qsh: qsh,
-                         iat: issued_at,
-                         exp: expires_at,
-                         iss: current_jwt_auth.addon_key
-                       }, current_jwt_auth.shared_secret)
+        qsh: qsh,
+        iat: issued_at,
+        exp: expires_at,
+        iss: current_jwt_auth.addon_key
+      }, current_jwt_auth.shared_secret)
 
       # return the service call URL with the JWT token added
       "#{current_jwt_auth.api_base_url}#{endpoint}?jwt=#{jwt}"
     end
 
     def rest_api_call(method, endpoint, data = nil)
-      response = HTTParty.send(method, rest_api_url(method, endpoint), {
+      response = HttpClient.new.send(method, rest_api_url(method, endpoint), {
         body: data ? data.to_json : nil,
         headers: {'Content-Type' => 'application/json'}
       })
@@ -63,7 +68,7 @@ module AtlassianJwtAuthentication
       if response.success?
         Response.new(200, JSON::parse(response.body))
       else
-        Response.new(response.code)
+        Response.new(response.status)
       end
     end
 
