@@ -9,7 +9,7 @@ module AtlassianJwtAuthentication
       end
 
       begin
-        decoded = JWT.decode(jwt, nil, false, {verify_expiration: verify_jwt_expiration})
+        decoded = JWT.decode(jwt, nil, false, {verify_expiration: AtlassianJwtAuthentication.verify_jwt_expiration})
       rescue Exception => e
         return false
       end
@@ -37,7 +37,7 @@ module AtlassianJwtAuthentication
       # The JWT gem has changed the way you can access the decoded segments in v 1.5.5, we just handle both.
       if JWT.const_defined?(:Decode)
         options = {
-          verify_expiration: verify_jwt_expiration,
+          verify_expiration: AtlassianJwtAuthentication.verify_jwt_expiration,
           verify_not_before: true,
           verify_iss: false,
           verify_iat: false,
