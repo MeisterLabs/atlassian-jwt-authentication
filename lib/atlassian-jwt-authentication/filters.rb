@@ -153,17 +153,8 @@ module AtlassianJwtAuthentication
       encoding_data = decoded[1]
 
       # Find a matching JWT token in the DB
-      client_key = data['iss']
-
-      # The audience claim identifies the intended recipient, according to the JWT spec,
-      # but we still allow the issuer to be used if 'aud' is missing.
-      # Session JWTs make use of this (the issuer is the add-on in this case)
-      if data['aud'] && data['aud'].size > 0
-        client_key = data['aud'][0]
-      end
-
       jwt_auth = JwtToken.where(
-          client_key: client_key,
+          client_key: data['iss'],
           addon_key: addon_key
       ).first
 
