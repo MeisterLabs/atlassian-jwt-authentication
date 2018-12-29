@@ -201,6 +201,8 @@ module AtlassianJwtAuthentication
         return false
       end
 
+      # we allow client side tokens without qsh - generated with AP.context.getToken()
+      # see https://developer.atlassian.com/cloud/jira/platform/jsapi/context/
       if data['qsh']
         # Verify the query has not been tampered by Creating a Query Hash and
         # comparing it against the qsh claim on the verified token
