@@ -137,7 +137,7 @@ Both require the method and the endpoint that you need to access:
 ```ruby
 # Get available project types
 url = rest_api_url(:get, '/rest/api/2/project/type')
-response = HTTParty.get(url)
+response = Faraday.get(url)
 
 # Create an issue
 data = {
@@ -157,47 +157,13 @@ pp response.success?
 
 ```
 
+### 5. User impersonification
 
-### 4. Preparing service gateways
+To make requests on user's behalf add `act_as_user` in scopes required by your app. 
 
-You can also prepare a service gateway that will encapsulate communication methods with the product. Here's a sample JIRA gateway:
+Later you can obtain [OAuth bearer token](https://developer.atlassian.com/cloud/jira/software/oauth-2-jwt-bearer-token-authorization-grant-type/) from Atlassian.
 
-```ruby
-class JiraGateway
-
-  class << self
-    def new(current_jwt_auth, *args)
-      Class.new(AbstractJiraGateway) { |klass|
-        klass.base_uri(current_jwt_auth.api_base_url)
-      }.new(current_jwt_auth, *args)
-    end
-  end
-
-  class AbstractJiraGateway
-    include HTTParty
-    include AtlassianJwtAuthentication::HTTParty
-
-    def initialize(current_jwt_auth)
-      @current_jwt_auth = current_jwt_auth
-    end
-
-    def user(user_key)
-      self.class.get_with_jwt('/rest/api/2/user', {
-        query: {
-          key: user_key
-        },
-        current_jwt_auth: @current_jwt_auth
-      })
-    end
-  end
-end
-```
-
-Then use it in your controller:
-
-```ruby
-JiraGateway.new(current_jwt_auth).user('admin')
-```
+Do that using `AtlassianJwtAuthentication::UserBearerToken.user_bearer_token(account_id, scopes)` 
 
 ## Installing the add-on
 
@@ -215,6 +181,8 @@ Config | Environment variable | Description | Default |
 ------ | -------------------- | ----------- | ------- |
 `AtlassianJwtAuthentication.context_path` | none | server path your app is running at | `''` 
 `AtlassianJwtAuthentication.verify_jwt_expiration` | `JWT_VERIFY_EXPIRATION` | when `false` allow expired tokens, speeds up development, especially combined with webpack hot module reloading | `true` 
+`AtlassianJwtAuthentication.log_requests` | `AJA_LOG_REQUESTS` | when `true` outgoing HTTP requests will be logged | `false` 
+`AtlassianJwtAuthentication.debug_requests` | `AJA_DEBUG_REQUESTS` | when `true` HTTP requests will include body content, implicitly turns on `log_requests` | `false` 
 
 ## Requirements
 
