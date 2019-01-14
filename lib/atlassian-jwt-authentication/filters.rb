@@ -146,7 +146,7 @@ module AtlassianJwtAuthentication
 
       jwt_auth, jwt_user = AtlassianJwtAuthentication::Verify.verify_jwt(addon_key, jwt, request, exclude_qsh_params)
 
-      if !jwt_auth
+      unless jwt_auth
         head(:unauthorized)
         return false
       end
