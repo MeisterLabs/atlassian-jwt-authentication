@@ -9,7 +9,7 @@ Atlassian JWT Authentication provides support for handling JWT authentication as
 
 You can check out the latest source from git:
 
-    git clone https://github.com/MeisterLabs/atlassian-jwt-authentication.git
+`git clone https://github.com/MeisterLabs/atlassian-jwt-authentication.git`
 
 Or, if you're using Bundler, just add the following to your Gemfile:
 
@@ -20,40 +20,25 @@ gem 'atlassian-jwt-authentication',
 
 ## Usage
 
-### 1. Setup
+### Setup
 
 This gem relies on the `jwt_tokens` and `jwt_users` tables being present in your database and 
 the associated JwtToken and JwtUser models.
 
-`jwt_tokens` must contain the following fields:
+To create those simply use the provided generators:
 
-* `addon_key`
-* `client_key`
-* `shared_secret`
-* `product_type`
-* `base_url`
-* `api_base_url`
-
-`jwt_users` must contain the following fields:
-* `jwt_token_id`
-* `user_key`
-* `name`
-* `display_name`
-
-You can also simply use the provided generators that will create the tables and the models for you:
-
-```ruby
+```
 bundle exec rails g atlassian_jwt_authentication:setup
 ```
 
 If you are using another database for the JWT data storage than the default one, pass the name of the DB config to the generator:
-```ruby
+```
 bundle exec rails g atlassian_jwt_authentication:setup shared
 ```
 
 Don't forget to run your migrations now!
 
-### 2. Controller filters
+### Controller filters
 
 The gem provides 2 endpoints for an Atlassian add-on lifecycle, installed and uninstalled. 
 For more information on the available Atlassian lifecycle callbacks visit 
@@ -69,7 +54,7 @@ step of verifying the JWT:
 AtlassianJwtAuthentication.context_path = '/atlassian/confluence'
 ```
 
-#### 2.1 Add-on installation
+#### Add-on installation
 The gem will take care of setting up the necessary JWT tokens upon add-on installation and to
 delete the appropriate tokens upon un-installation. To use this functionality, simply call
  
@@ -80,7 +65,7 @@ before_action :on_add_on_installed, only: [:installed]
 before_action :on_add_on_uninstalled, only: [:uninstalled]
 ```
 
-#### 2.2 Add-on authentication
+#### Add-on authentication
 Furthermore, protect the methods that will be JWT aware by using the gem's
 JWT token verification filter. You need to pass your add-on descriptor so that
 the appropriate JWT shared secret can be identified:
@@ -110,7 +95,7 @@ pp current_jwt_user.name
 pp current_jwt_user.display_name
 ```
 
-#### 2.3 Add-on licensing
+#### Add-on licensing
 If your add-on has a licensing model you can use the `ensure_license` filter to check for a valid license.
 As with the `verify_jwt` filter, this simply responds with an unauthorized header if there is no valid license
 for the installation.
@@ -128,7 +113,22 @@ def min_licensing_version
 end
 ```
 
-### 3. Making a service call
+### Middleware
+
+You can use a middleware to verify JWT tokens (for example in Rails `application.rb`):
+
+```ruby
+config.middleware.insert_after ActionDispatch::Session::CookieStore, AtlassianJwtAuthentication::Middleware::VerifyJwtToken, 'your_addon_key'
+```
+
+Token will be taken from params or `Authorization` header, if it's verified successfully request will have following headers set:
+
+* atlassian_jwt_authorization.jwt_token `JwtToken` instance
+* atlassian_jwt_authorization.jwt_user `JwtUser` instance
+
+Middleware will not block requests with invalid or missing JWT tokens, you need to use another layer for that.
+
+### Making a service call
 
 Build the URL required to make a service call with the `rest_api_url` helper or
 make a service call with the `rest_api_call` helper that will handle the request for you.
@@ -157,7 +157,7 @@ pp response.success?
 
 ```
 
-### 5. User impersonification
+### User impersonification
 
 To make requests on user's behalf add `act_as_user` in scopes required by your app. 
 
@@ -187,3 +187,22 @@ Config | Environment variable | Description | Default |
 ## Requirements
 
 Ruby 2.0+, ActiveRecord 4.1+
+
+## Integrations
+
+### Message Bus
+
+With middleware enabled you can use following configuration to limit access to message bus per user / instance:
+```ruby
+MessageBus.user_id_lookup do |env|
+  env.try(:[], 'atlassian_jwt_authentication.jwt_user').try(:id)
+end
+
+MessageBus.site_id_lookup do |env|
+  env.try(:[], 'atlassian_jwt_authentication.jwt_token').try(:id)
+end
+```
+
+Then use `MessageBus.publish('/test', 'message', site_id: X, user_ids: [Y])` to publish message only for a user.
+
+Requires message_bus patch available at https://github.com/HeroCoders/message_bus/commit/cd7c752fe85a17f7e54aa950a94d7c6378a55ed1
