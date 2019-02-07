@@ -8,7 +8,11 @@ class CreateAtlassianJwtUsers < ActiveRecord::Migration
         t.string :user_key
         t.string :name
         t.string :display_name
+        t.string :account_id
       end
+
+      add_index :jwt_users, [:user_key, :jwt_token_id], unique: true
+      add_index :jwt_users, [:account_id, :jwt_token_id], unique: true
     end
   end
 end
