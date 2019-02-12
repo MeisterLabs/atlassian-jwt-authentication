@@ -8,10 +8,10 @@ module AtlassianJwtAuthentication
     GRANT_TYPE = "urn:ietf:params:oauth:grant-type:jwt-bearer"
     SCOPE_SEPARATOR = ' '
 
-    def self.get_access_token(current_jwt_auth, account_id, scopes = nil)
+    def self.get_access_token(current_jwt_token, account_id, scopes = nil)
       response = HttpClient.new.post(AUTHORIZATION_SERVER_URL + "/oauth2/token") do |request|
         request.params["grant_type"] = GRANT_TYPE
-        request.params["assertion"] = prepare_jwt_token(current_jwt_auth, account_id)
+        request.params["assertion"] = prepare_jwt_token(current_jwt_token, account_id)
 
         if scopes
           request.params["scopes"] = scopes.join(SCOPE_SEPARATOR).upcase
@@ -22,8 +22,8 @@ module AtlassianJwtAuthentication
       JSON.parse(response.body)
     end
 
-    def self.prepare_jwt_token(current_jwt_auth, account_id)
-      unless current_jwt_auth
+    def self.prepare_jwt_token(current_jwt_token, account_id)
+      unless current_jwt_token
         raise 'Missing Authentication context'
       end
 
@@ -36,13 +36,13 @@ module AtlassianJwtAuthentication
       expires_at = issued_at + EXPIRE_IN_SECONDS
 
       JWT.encode({
-        iss: JWT_CLAIM_PREFIX + ":clientid:" + current_jwt_auth.oauth_client_id,
+        iss: JWT_CLAIM_PREFIX + ":clientid:" + current_jwt_token.oauth_client_id,
         sub: JWT_CLAIM_PREFIX + ":useraccountid:" + account_id,
-        tnt: current_jwt_auth.base_url,
+        tnt: current_jwt_token.base_url,
         aud: AUTHORIZATION_SERVER_URL,
         iat: issued_at,
         exp: expires_at,
-      }, current_jwt_auth.shared_secret)
+      }, current_jwt_token.shared_secret)
     end
   end
 end
