@@ -137,8 +137,8 @@ module AtlassianJwtAuthentication
       end
 
       if request.headers['authorization'].present?
-        algorithm, jwt = request.headers['authorization'].split(' ')
-        jwt = nil unless algorithm == 'JWT'
+        algorithm, possible_jwt = request.headers['authorization'].split(' ')
+        jwt = possible_jwt if algorithm == 'JWT'
       end
 
       jwt_auth, jwt_user = AtlassianJwtAuthentication::Verify.verify_jwt(addon_key, jwt, request, exclude_qsh_params)
