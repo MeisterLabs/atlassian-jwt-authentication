@@ -87,11 +87,12 @@ module AtlassianJwtAuthentication
         qsh = Digest::SHA256.hexdigest(qsh)
 
         unless data['qsh'] == qsh
-          return
+          return false
         end
       end
 
       jwt_user = nil
+      context = data['context']
 
       # In the case of Confluence and Jira we receive user information inside the JWT token
       if data['context'] && data['context']['user']
@@ -114,7 +115,7 @@ module AtlassianJwtAuthentication
         jwt_user = jwt_auth.jwt_users.find_by(user_key: data['sub'])
       end
 
-      [jwt_auth, jwt_user]
+      [jwt_auth, jwt_user, context]
     end
 
     private

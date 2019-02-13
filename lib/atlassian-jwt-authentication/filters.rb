@@ -123,6 +123,8 @@ module AtlassianJwtAuthentication
     def _verify_jwt(addon_key, consider_param = false)
       self.current_jwt_token = nil
       self.current_jwt_user = nil
+      self.current_account_id = nil
+      self.current_jwt_context = nil
 
       jwt = nil
 
@@ -141,7 +143,7 @@ module AtlassianJwtAuthentication
         jwt = possible_jwt if algorithm == 'JWT'
       end
 
-      jwt_auth, jwt_user = AtlassianJwtAuthentication::Verify.verify_jwt(addon_key, jwt, request, exclude_qsh_params)
+      jwt_auth, jwt_user, context = AtlassianJwtAuthentication::Verify.verify_jwt(addon_key, jwt, request, exclude_qsh_params)
 
       unless jwt_auth
         head(:unauthorized)
@@ -150,6 +152,8 @@ module AtlassianJwtAuthentication
 
       self.current_jwt_token = jwt_auth
       self.current_jwt_user = jwt_user
+      self.current_account_id = jwt_user&.account_id if jwt_user.respond_to?(:account_id)
+      self.current_jwt_context = context
 
       true
     end
