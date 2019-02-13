@@ -28,25 +28,25 @@ module AtlassianJwtAuthentication
       if jwt_auth
         # The add-on was previously installed on this client
         return false unless _verify_jwt(addon_key)
-        if jwt_auth.id != current_jwt_auth.id
+        if jwt_auth.id != current_jwt_token.id
           # Update request was issued to another plugin
           head(:forbidden)
           return false
         end
       else
-        self.current_jwt_auth = JwtToken.new(jwt_token_params)
+        self.current_jwt_token = JwtToken.new(jwt_token_params)
       end
 
-      current_jwt_auth.addon_key = addon_key
-      current_jwt_auth.shared_secret = shared_secret
-      current_jwt_auth.product_type = "atlassian:#{product_type}"
-      current_jwt_auth.base_url = base_url if current_jwt_auth.respond_to?(:base_url)
-      current_jwt_auth.api_base_url = api_base_url if current_jwt_auth.respond_to?(:api_base_url)
-      current_jwt_auth.oauth_client_id = params[:oauthClientId] if current_jwt_auth.respond_to?(:oauth_client_id)
-      current_jwt_auth.public_key = params[:publicKey] if current_jwt_auth.respond_to?(:public_key)
-      current_jwt_auth.payload = params.to_unsafe_h if current_jwt_auth.respond_to?(:payload)
+      current_jwt_token.addon_key = addon_key
+      current_jwt_token.shared_secret = shared_secret
+      current_jwt_token.product_type = "atlassian:#{product_type}"
+      current_jwt_token.base_url = base_url if current_jwt_token.respond_to?(:base_url)
+      current_jwt_token.api_base_url = api_base_url if current_jwt_token.respond_to?(:api_base_url)
+      current_jwt_token.oauth_client_id = params[:oauthClientId] if current_jwt_token.respond_to?(:oauth_client_id)
+      current_jwt_token.public_key = params[:publicKey] if current_jwt_token.respond_to?(:public_key)
+      current_jwt_token.payload = params.to_unsafe_h if current_jwt_token.respond_to?(:payload)
 
-      current_jwt_auth.save!
+      current_jwt_token.save!
 
       # BitBucket sends user details on installation
       [:principal, :user].each do |key|
@@ -55,7 +55,7 @@ module AtlassianJwtAuthentication
           if user[:username].present? && user[:display_name].present? &&
               user[:uuid].present? && user[:type].present? && user[:type] == 'user'
 
-            jwt_user = current_jwt_auth.jwt_users.find_or_initialize_by(user_key: user[:uuid])
+            jwt_user = current_jwt_token.jwt_users.find_or_initialize_by(user_key: user[:uuid])
 
             jwt_user.update!(
               name: user[:username],
@@ -89,11 +89,11 @@ module AtlassianJwtAuthentication
     end
 
     def ensure_license
-      unless current_jwt_auth
-        raise 'current_jwt_auth missing, add the verify_jwt filter'
+      unless current_jwt_token
+        raise 'current_jwt_token missing, add the verify_jwt filter'
       end
 
-      response = rest_api_call(:get, "/rest/atlassian-connect/1/addons/#{current_jwt_auth.addon_key}")
+      response = rest_api_call(:get, "/rest/atlassian-connect/1/addons/#{current_jwt_token.addon_key}")
       unless response.success? && response.data
         head(:unauthorized)
         return false
@@ -121,7 +121,7 @@ module AtlassianJwtAuthentication
     private
 
     def _verify_jwt(addon_key, consider_param = false)
-      self.current_jwt_auth = nil
+      self.current_jwt_token = nil
       self.current_jwt_user = nil
 
       jwt = nil
@@ -148,7 +148,7 @@ module AtlassianJwtAuthentication
         return false
       end
 
-      self.current_jwt_auth = jwt_auth
+      self.current_jwt_token = jwt_auth
       self.current_jwt_user = jwt_user
 
       true
