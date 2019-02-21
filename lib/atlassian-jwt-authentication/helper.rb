@@ -29,6 +29,28 @@ module AtlassianJwtAuthentication
       @jwt_user = jwt_user
     end
 
+    # Returns the current JWT context if it exists
+    def current_jwt_context
+      @jwt_context ||= session[:jwt_context]
+    end
+
+    # Sets the current JWT context
+    def current_jwt_context=(jwt_context)
+      session[:jwt_context] = jwt_context
+      @jwt_context = jwt_context
+    end
+
+    # Returns the current JWT account_id if it exists
+    def current_account_id
+      @account_id ||= session[:account_id]
+    end
+
+    # Sets the current JWT account_id
+    def current_account_id=(account_id)
+      session[:account_id] = account_id
+      @account_id = account_id
+    end
+
     def user_bearer_token(account_id, scopes)
       AtlassianJwtAuthentication::UserBearerToken::user_bearer_token(current_jwt_token, account_id, scopes)
     end
