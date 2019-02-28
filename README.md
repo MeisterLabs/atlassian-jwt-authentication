@@ -85,8 +85,8 @@ Furthermore, this information is stored in the session so you will have access
 to these 2 instances also on subsequent requests even if they are not JWT signed.
 
 ```ruby
-# current_jwt_auth returns an instance of JwtToken, so you have access to the fields described above
-pp current_jwt_auth.addon_key
+# current_jwt_token returns an instance of JwtToken, so you have access to the fields described above
+pp current_jwt_token.addon_key
 
 # current_jwt_user is an instance of JwtUser, so you have access to the Atlassian user information.
 # Beware, this information is not present when developing for Bitbucket.
@@ -206,3 +206,15 @@ end
 Then use `MessageBus.publish('/test', 'message', site_id: X, user_ids: [Y])` to publish message only for a user.
 
 Requires message_bus patch available at https://github.com/HeroCoders/message_bus/commit/cd7c752fe85a17f7e54aa950a94d7c6378a55ed1
+
+
+## Upgrade guide
+
+### Versions < 0.6.x
+
+`current_jwt_auth` has been renamed to `current_jwt_token` to match model name. Either mass rename or add `alias` in your controller:
+
+```ruby
+alias_method :current_jwt_auth, :current_jwt_token
+helper_method :current_jwt_auth
+```
