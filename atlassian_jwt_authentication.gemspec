@@ -19,8 +19,7 @@ Gem::Specification.new do |s|
   s.require_path = 'lib'
 
   s.add_dependency('addressable', '>= 2.4.0')
-  s.add_dependency('faraday', '>= 0.15')
-  s.add_dependency('i18n', '~> 1.0.1')
+  s.add_dependency('faraday', '>= 0.11')
   s.add_dependency('jwt', '~> 1.5')
 
   s.add_development_dependency('activerecord', '>= 4.1.0')

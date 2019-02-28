@@ -3,4 +3,4 @@ source 'https://rubygems.org'
 gemspec
 
 gem 'addressable'
-gem "faraday", "~> 0.15.4"
+gem 'faraday', '~> 0.11.0'
