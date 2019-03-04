@@ -197,7 +197,7 @@ Ruby 2.0+, ActiveRecord 4.1+
 With middleware enabled you can use following configuration to limit access to message bus per user / instance:
 ```ruby
 MessageBus.user_id_lookup do |env|
-  env.try(:[], 'atlassian_jwt_authentication.jwt_user').try(:id)
+  env.try(:[], 'atlassian_jwt_authentication.account_id')
 end
 
 MessageBus.site_id_lookup do |env|

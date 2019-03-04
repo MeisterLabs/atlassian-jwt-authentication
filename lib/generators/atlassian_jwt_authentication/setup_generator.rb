@@ -29,12 +29,10 @@ module AtlassianJwtAuthentication
 
     def generate_migration
       migration_template 'jwt_tokens_migration.rb.erb', "db/#{database_name.present? ? "db_#{database_name}/" : ''}migrate/create_atlassian_jwt_tokens.rb"
-      migration_template 'jwt_users_migration.rb.erb', "db/#{database_name.present? ? "db_#{database_name}/" : ''}migrate/create_atlassian_jwt_users.rb"
     end
 
     def generate_models
-      template 'jwt_token.rb', File.join('app/models', '', 'jwt_token.rb')
-      template 'jwt_user.rb', File.join('app/models', '', 'jwt_user.rb')
+      template 'jwt_token.rb.erb', File.join('app/models', '', 'jwt_token.rb')
     end
   end
 end
