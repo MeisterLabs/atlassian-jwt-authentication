@@ -22,8 +22,8 @@ gem 'atlassian-jwt-authentication',
 
 ### Setup
 
-This gem relies on the `jwt_tokens` and `jwt_users` tables being present in your database and 
-the associated JwtToken and JwtUser models.
+This gem relies on the `jwt_tokens` table being present in your database and 
+the associated JwtToken model.
 
 To create those simply use the provided generators:
 
