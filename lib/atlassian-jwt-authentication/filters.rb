@@ -89,6 +89,8 @@ module AtlassianJwtAuthentication
     end
 
     def ensure_license
+      logger.info('ensure license')
+
       unless current_jwt_token
         raise 'current_jwt_token missing, add the verify_jwt filter'
       end
@@ -128,7 +130,9 @@ module AtlassianJwtAuthentication
     private
 
     def _verify_jwt(addon_key, consider_param = false)
-      logger.info('verify_jwt...')
+      logger.info("verify_jwt...")
+      logger.info("#{request.path}")
+      logger.info(request.params.to_s)
 
       self.current_jwt_token = nil
       self.current_jwt_user = nil
