@@ -3,14 +3,17 @@ require 'jwt'
 module AtlassianJwtAuthentication
   class Verify
 
-    def self.verify_jwt(addon_key, jwt, request, exclude_qsh_params = [])
+    def self.verify_jwt(addon_key, jwt, request, exclude_qsh_params = [], logger = nil)
+      logger = Logger.new('atlassian_jwt.log') if logger.nil?
+
       unless jwt.present? && addon_key.present?
         return false
       end
 
       begin
         decoded = JWT.decode(jwt, nil, false, {verify_expiration: AtlassianJwtAuthentication.verify_jwt_expiration})
-      rescue Exception => e
+      rescue => e
+        logger.error("could not decode JWT: #{e.to_s} \n #{e.backtrace.join("\n")}")
         return false
       end
 
@@ -25,11 +28,13 @@ module AtlassianJwtAuthentication
       ).first
 
       unless jwt_auth
+        logger.error("could not find jwt_token for client_key #{data['iss']} and addon_key #{addon_key}")
         return false
       end
 
       # Discard tokens without verification
       if encoding_data['alg'] == 'none'
+        logger.error("the JWT checking algorithm was set to none for client_key #{data['iss']} and addon_key #{addon_key}")
         return false
       end
 
@@ -53,13 +58,15 @@ module AtlassianJwtAuthentication
       end
 
       unless header && payload
+        logger.error("error decoding JWT segments - no header and payload for client_key #{data['iss']} and addon_key #{addon_key}")
         return false
       end
 
       # Now verify the signature with the proper algorithm
       begin
         JWT.verify_signature(encoding_data['alg'], jwt_auth.shared_secret, signing_input, signature)
-      rescue Exception => e
+      rescue => e
+        logger.error("could not verify the JWT signature: #{e.to_s} \n #{e.backtrace.join("\n")}")
         return false
       end
 
@@ -87,6 +94,7 @@ module AtlassianJwtAuthentication
         qsh = Digest::SHA256.hexdigest(qsh)
 
         unless data['qsh'] == qsh
+          logger.error("could not check qsh for client_key #{data['iss']} and addon_key #{addon_key}")
           return false
         end
       end
