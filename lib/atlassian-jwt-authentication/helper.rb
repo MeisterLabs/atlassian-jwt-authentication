@@ -67,10 +67,13 @@ module AtlassianJwtAuthentication
     end
 
     def rest_api_call(method, endpoint, data = nil)
-      response = HttpClient.new.send(method, rest_api_url(method, endpoint), {
-        body: data ? data.to_json : nil,
-        headers: {'Content-Type' => 'application/json'}
-      })
+      url = rest_api_url(method, endpoint)
+      options = {
+          body: data ? data.to_json : nil,
+          headers: {'Content-Type' => 'application/json'}
+      }
+
+      response = HttpClient.new(url, options).send(method)
 
       to_json_response(response)
     end
