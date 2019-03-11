@@ -89,12 +89,17 @@ module AtlassianJwtAuthentication
     end
 
     def ensure_license
+      logger.info('ensure license')
+
       unless current_jwt_token
         raise 'current_jwt_token missing, add the verify_jwt filter'
       end
 
+      logger.info("ensure_license for client #{current_jwt_token.client_key}...")
+
       response = rest_api_call(:get, "/rest/atlassian-connect/1/addons/#{current_jwt_token.addon_key}")
       unless response.success? && response.data
+        logger.error("client #{current_jwt_token.client_key}: API call to get the license failed")
         head(:unauthorized)
         return false
       end
@@ -104,16 +109,20 @@ module AtlassianJwtAuthentication
       if min_licensing_version && current_version > min_licensing_version || !min_licensing_version
         # do we need to check for licensing on this add-on version?
         unless params[:lic] && params[:lic] == 'active'
+          logger.error("client #{current_jwt_token.client_key}: no active license was found in the params")
           head(:unauthorized)
           return false
         end
 
         unless response.data['state'] == 'ENABLED' &&
             response.data['license'] && response.data['license']['active']
+          logger.error("client #{current_jwt_token.client_key}: no active & enabled license was found")
           head(:unauthorized)
           return false
         end
       end
+
+      logger.info("license for client #{current_jwt_token.client_key} OK")
 
       true
     end
@@ -121,6 +130,10 @@ module AtlassianJwtAuthentication
     private
 
     def _verify_jwt(addon_key, consider_param = false)
+      logger.info("verify_jwt...")
+      logger.info("#{request.path}")
+      logger.info(request.params.to_s)
+
       self.current_jwt_token = nil
       self.current_jwt_user = nil
       self.current_account_id = nil
@@ -134,6 +147,7 @@ module AtlassianJwtAuthentication
       if consider_param
         jwt = params[:jwt] if params[:jwt].present?
       elsif !request.headers['authorization'].present?
+        logger.error('missing authorization header')
         head(:unauthorized)
         return false
       end
@@ -143,7 +157,7 @@ module AtlassianJwtAuthentication
         jwt = possible_jwt if algorithm == 'JWT'
       end
 
-      jwt_auth, jwt_user, context = AtlassianJwtAuthentication::Verify.verify_jwt(addon_key, jwt, request, exclude_qsh_params)
+      jwt_auth, jwt_user, context = AtlassianJwtAuthentication::Verify.verify_jwt(addon_key, jwt, request, exclude_qsh_params, logger)
 
       unless jwt_auth
         head(:unauthorized)
@@ -154,6 +168,8 @@ module AtlassianJwtAuthentication
       self.current_jwt_user = jwt_user
       self.current_account_id = jwt_user&.account_id if jwt_user.respond_to?(:account_id)
       self.current_jwt_context = context
+
+      logger.info('JWT verification OK')
 
       true
     end
@@ -173,6 +189,11 @@ module AtlassianJwtAuthentication
     # This can be overwritten in the including controller
     def min_licensing_version
       nil
+    end
+
+    # This can be overwritten in the including controller
+    def logger
+      Logger.new('atlassian_jwt.log')
     end
   end
 end
