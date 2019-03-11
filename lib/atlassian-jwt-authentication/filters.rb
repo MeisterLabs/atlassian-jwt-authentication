@@ -48,22 +48,6 @@ module AtlassianJwtAuthentication
 
       current_jwt_token.save!
 
-      # BitBucket sends user details on installation
-      [:principal, :user].each do |key|
-        if params[key].present?
-          user = params[key]
-          if user[:username].present? && user[:display_name].present? &&
-              user[:uuid].present? && user[:type].present? && user[:type] == 'user'
-
-            jwt_user = current_jwt_token.jwt_users.find_or_initialize_by(user_key: user[:uuid])
-
-            jwt_user.update!(
-              name: user[:username],
-              display_name: user[:display_name])
-          end
-        end
-      end
-
       true
     end
 
@@ -122,7 +106,6 @@ module AtlassianJwtAuthentication
 
     def _verify_jwt(addon_key, consider_param = false)
       self.current_jwt_token = nil
-      self.current_jwt_user = nil
       self.current_account_id = nil
       self.current_jwt_context = nil
 
@@ -143,7 +126,7 @@ module AtlassianJwtAuthentication
         jwt = possible_jwt if algorithm == 'JWT'
       end
 
-      jwt_auth, jwt_user, context = AtlassianJwtAuthentication::Verify.verify_jwt(addon_key, jwt, request, exclude_qsh_params)
+      jwt_auth, account_id, context = AtlassianJwtAuthentication::Verify.verify_jwt(addon_key, jwt, request, exclude_qsh_params)
 
       unless jwt_auth
         head(:unauthorized)
@@ -151,8 +134,7 @@ module AtlassianJwtAuthentication
       end
 
       self.current_jwt_token = jwt_auth
-      self.current_jwt_user = jwt_user
-      self.current_account_id = jwt_user&.account_id if jwt_user.respond_to?(:account_id)
+      self.current_account_id = account_id
       self.current_jwt_context = context
 
       true
