@@ -18,17 +18,6 @@ module AtlassianJwtAuthentication
       @jwt_auth = jwt_auth
     end
 
-    # Returns the current JWT User if it exists
-    def current_jwt_user
-      @jwt_user ||= session[:jwt_user] ? JwtUser.where(id: session[:jwt_user]).first : nil
-    end
-
-    # Sets the current JWT user
-    def current_jwt_user=(jwt_user)
-      session[:jwt_user] = jwt_user.nil? ? nil : jwt_user.id
-      @jwt_user = jwt_user
-    end
-
     # Returns the current JWT context if it exists
     def current_jwt_context
       @jwt_context ||= session[:jwt_context]
@@ -78,10 +67,13 @@ module AtlassianJwtAuthentication
     end
 
     def rest_api_call(method, endpoint, data = nil)
-      response = HttpClient.new.send(method, rest_api_url(method, endpoint), {
-        body: data ? data.to_json : nil,
-        headers: {'Content-Type' => 'application/json'}
-      })
+      url = rest_api_url(method, endpoint)
+      options = {
+          body: data ? data.to_json : nil,
+          headers: {'Content-Type' => 'application/json'}
+      }
+
+      response = HttpClient.new(url, options).send(method)
 
       to_json_response(response)
     end

@@ -22,8 +22,8 @@ gem 'atlassian-jwt-authentication',
 
 ### Setup
 
-This gem relies on the `jwt_tokens` and `jwt_users` tables being present in your database and 
-the associated JwtToken and JwtUser models.
+This gem relies on the `jwt_tokens` table being present in your database and 
+the associated JwtToken model.
 
 To create those simply use the provided generators:
 
@@ -79,21 +79,22 @@ before_filter only: [:display, :editor] do |controller|
 end
 ```
 
-Methods that are protected by the `verify_jwt` filter also have access to information
-about the current JWT authentication instance and the JWT user (when available).
+Methods that are protected by the `verify_jwt` filter also give access to information
+about the current JWT token instance and logged in account (when available):
+
+* `current_jwt_token` returns `JwtToken`
+* `current_account_id` returns `String`
+
 Furthermore, this information is stored in the session so you will have access
 to these 2 instances also on subsequent requests even if they are not JWT signed.
 
 ```ruby
 # current_jwt_token returns an instance of JwtToken, so you have access to the fields described above
 pp current_jwt_token.addon_key
-
-# current_jwt_user is an instance of JwtUser, so you have access to the Atlassian user information.
-# Beware, this information is not present when developing for Bitbucket.
-pp current_jwt_user.user_key
-pp current_jwt_user.name
-pp current_jwt_user.display_name
+pp current_jwt_token.base_url
 ```
+
+If you need detailed user information you need to obtain it from the instance and process it respecting GDPR.
 
 #### Add-on licensing
 If your add-on has a licensing model you can use the `ensure_license` filter to check for a valid license.
@@ -124,7 +125,8 @@ config.middleware.insert_after ActionDispatch::Session::CookieStore, AtlassianJw
 Token will be taken from params or `Authorization` header, if it's verified successfully request will have following headers set:
 
 * atlassian_jwt_authorization.jwt_token `JwtToken` instance
-* atlassian_jwt_authorization.jwt_user `JwtUser` instance
+* atlassian_jwt_authorization.account_id `String` instance
+* atlassian_jwt_authorization.context `Hash` instance
 
 Middleware will not block requests with invalid or missing JWT tokens, you need to use another layer for that.
 
@@ -195,7 +197,7 @@ Ruby 2.0+, ActiveRecord 4.1+
 With middleware enabled you can use following configuration to limit access to message bus per user / instance:
 ```ruby
 MessageBus.user_id_lookup do |env|
-  env.try(:[], 'atlassian_jwt_authentication.jwt_user').try(:id)
+  env.try(:[], 'atlassian_jwt_authentication.account_id')
 end
 
 MessageBus.site_id_lookup do |env|
@@ -209,6 +211,10 @@ Requires message_bus patch available at https://github.com/HeroCoders/message_bu
 
 
 ## Upgrade guide
+
+### Version 0.7.x
+
+Removed `current_jwt_user`, `JwtUser`, update your code to use `current_account_id`
 
 ### Versions < 0.6.x
 

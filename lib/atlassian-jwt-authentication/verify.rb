@@ -99,31 +99,16 @@ module AtlassianJwtAuthentication
         end
       end
 
-      jwt_user = nil
       context = data['context']
 
       # In the case of Confluence and Jira we receive user information inside the JWT token
       if data['context'] && data['context']['user']
-        # Has this user accessed our add-on before?
-        # If not, create a new JwtUser
-
-        context_user = data['context']['user']
-        jwt_user = JwtUser.find_or_initialize_by(jwt_token_id: jwt_auth.id, user_key: context_user['userKey'])
-
-        jwt_user.update!(
-          name: context_user['username'],
-          display_name: context_user['displayName'],
-          account_id: jwt_user.account_id ? jwt_user.account_id : context_user['accountId']
-        )
-      elsif request.params[:user_uuid]
-        jwt_user = jwt_auth.jwt_users.find_by(user_key: request.params[:user_uuid])
+        account_id = data['context']['user']['accountId']
+      else
+        account_id = data['sub']
       end
 
-      unless jwt_user
-        jwt_user = jwt_auth.jwt_users.find_by(user_key: data['sub'])
-      end
-
-      [jwt_auth, jwt_user, context]
+      [jwt_auth, account_id, context]
     end
 
     private
