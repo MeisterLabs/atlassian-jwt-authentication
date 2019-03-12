@@ -60,10 +60,7 @@ module AtlassianJwtAuthentication
 
       return false unless client_key.present?
 
-      auths = JwtToken.where(client_key: client_key, addon_key: addon_key)
-      auths.each do |auth|
-        auth.destroy
-      end
+      JwtToken.where(client_key: client_key, addon_key: addon_key).destroy_all
 
       true
     end
@@ -73,17 +70,17 @@ module AtlassianJwtAuthentication
     end
 
     def ensure_license
-      logger.info('ensure license')
+      log(:info, 'Ensure license')
 
       unless current_jwt_token
         raise 'current_jwt_token missing, add the verify_jwt filter'
       end
 
-      logger.info("ensure_license for client #{current_jwt_token.client_key}...")
+      log(:info, "Ensure_license for client #{current_jwt_token.client_key}...")
 
       response = rest_api_call(:get, "/rest/atlassian-connect/1/addons/#{current_jwt_token.addon_key}")
       unless response.success? && response.data
-        logger.error("client #{current_jwt_token.client_key}: API call to get the license failed")
+        log(:error, "Client #{current_jwt_token.client_key}: API call to get the license failed")
         head(:unauthorized)
         return false
       end
@@ -93,20 +90,20 @@ module AtlassianJwtAuthentication
       if min_licensing_version && current_version > min_licensing_version || !min_licensing_version
         # do we need to check for licensing on this add-on version?
         unless params[:lic] && params[:lic] == 'active'
-          logger.error("client #{current_jwt_token.client_key}: no active license was found in the params")
+          log(:error, "Client #{current_jwt_token.client_key}: no active license was found in the params")
           head(:unauthorized)
           return false
         end
 
         unless response.data['state'] == 'ENABLED' &&
             response.data['license'] && response.data['license']['active']
-          logger.error("client #{current_jwt_token.client_key}: no active & enabled license was found")
+          log(:error, "client #{current_jwt_token.client_key}: no active & enabled license was found")
           head(:unauthorized)
           return false
         end
       end
 
-      logger.info("license for client #{current_jwt_token.client_key} OK")
+      log(:info, "License for client #{current_jwt_token.client_key} OK")
 
       true
     end
@@ -114,9 +111,9 @@ module AtlassianJwtAuthentication
     private
 
     def _verify_jwt(addon_key, consider_param = false)
-      logger.info("verify_jwt...")
-      logger.info("#{request.path}")
-      logger.info(request.params.to_s)
+      log(:info, "Verifying JWT...")
+      log(:info, "#{request.path}")
+      log(:info, request.params.to_s)
 
       self.current_jwt_token = nil
       self.current_account_id = nil
@@ -130,7 +127,7 @@ module AtlassianJwtAuthentication
       if consider_param
         jwt = params[:jwt] if params[:jwt].present?
       elsif !request.headers['authorization'].present?
-        logger.error('missing authorization header')
+        log(:error, 'Missing authorization header')
         head(:unauthorized)
         return false
       end
@@ -140,7 +137,11 @@ module AtlassianJwtAuthentication
         jwt = possible_jwt if algorithm == 'JWT'
       end
 
-      jwt_auth, account_id, context = AtlassianJwtAuthentication::Verify.verify_jwt(addon_key, jwt, request, exclude_qsh_params, logger)
+      jwt_verification = AtlassianJwtAuthentication::JWTVerification.new(addon_key, jwt, request)
+      jwt_verification.exclude_qsh_params = exclude_qsh_params
+      jwt_verification.logger = logger if defined?(logger)
+
+      jwt_auth, account_id, context = jwt_verification.verify
 
       unless jwt_auth
         head(:unauthorized)
@@ -151,7 +152,7 @@ module AtlassianJwtAuthentication
       self.current_account_id = account_id
       self.current_jwt_context = context
 
-      logger.info('JWT verification OK')
+      log(:info, 'JWT verification OK')
 
       true
     end
@@ -173,9 +174,10 @@ module AtlassianJwtAuthentication
       nil
     end
 
-    # This can be overwritten in the including controller
-    def logger
-      Logger.new('atlassian_jwt.log')
+    def log(level, message)
+      return unless defined?(logger)
+
+      logger.send(level.to_sym, message)
     end
   end
 end
