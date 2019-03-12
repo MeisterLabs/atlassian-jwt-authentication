@@ -70,17 +70,13 @@ module AtlassianJwtAuthentication
     end
 
     def ensure_license
-      log(:info, 'Ensure license')
-
       unless current_jwt_token
         raise 'current_jwt_token missing, add the verify_jwt filter'
       end
 
-      log(:info, "Ensure_license for client #{current_jwt_token.client_key}...")
-
       response = rest_api_call(:get, "/rest/atlassian-connect/1/addons/#{current_jwt_token.addon_key}")
       unless response.success? && response.data
-        log(:error, "Client #{current_jwt_token.client_key}: API call to get the license failed")
+        log(:error, "Client #{current_jwt_token.client_key}: API call to get the license failed with #{response.status}")
         head(:unauthorized)
         return false
       end
@@ -103,7 +99,7 @@ module AtlassianJwtAuthentication
         end
       end
 
-      log(:info, "License for client #{current_jwt_token.client_key} OK")
+      log(:info, "Client #{current_jwt_token.client_key}: license OK")
 
       true
     end
@@ -111,10 +107,6 @@ module AtlassianJwtAuthentication
     private
 
     def _verify_jwt(addon_key, consider_param = false)
-      log(:info, "Verifying JWT...")
-      log(:info, "#{request.path}")
-      log(:info, request.params.to_s)
-
       self.current_jwt_token = nil
       self.current_account_id = nil
       self.current_jwt_context = nil
@@ -151,8 +143,6 @@ module AtlassianJwtAuthentication
       self.current_jwt_token = jwt_auth
       self.current_account_id = account_id
       self.current_jwt_context = context
-
-      log(:info, 'JWT verification OK')
 
       true
     end

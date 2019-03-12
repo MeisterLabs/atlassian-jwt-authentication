@@ -104,7 +104,7 @@ module AtlassianJwtAuthentication
         qsh = Digest::SHA256.hexdigest(qsh)
 
         unless data['qsh'] == qsh
-          log(:error, "Could not check qsh for client_key #{data['iss']} and addon_key #{addon_key}")
+          log(:error, "QSH mismatch for client_key #{data['iss']} and addon_key #{addon_key}")
           return false
         end
       end
