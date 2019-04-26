@@ -78,7 +78,8 @@ module AtlassianJwtAuthentication
     end
 
     def to_json_response(response)
-        Response.new(response.status, JSON::parse(response.body))
+        data = JSON::parse(response.body) rescue nil
+        Response.new(response.status, data)
     end
 
     class Response
