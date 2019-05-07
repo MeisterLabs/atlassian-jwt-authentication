@@ -10,13 +10,14 @@ module AtlassianJwtAuthentication
 
     def self.get_access_token(current_jwt_token, account_id, scopes = nil)
       response = HttpClient.new.post(AUTHORIZATION_SERVER_URL + "/oauth2/token") do |request|
-        request.params["grant_type"] = GRANT_TYPE
-        request.params["assertion"] = prepare_jwt_token(current_jwt_token, account_id)
-
-        if scopes
-          request.params["scopes"] = scopes.join(SCOPE_SEPARATOR).upcase
-        end
+        request.headers['Content-Type'] = Faraday::Request::UrlEncoded.mime_type
+        request.body = {
+          grant_type: GRANT_TYPE,
+          assertion: prepare_jwt_token(current_jwt_token, account_id),
+          scopes: scopes&.join(SCOPE_SEPARATOR)&.upcase,
+        }.compact
       end
+
       raise "Request failed with #{response.status}" unless response.success?
 
       JSON.parse(response.body)

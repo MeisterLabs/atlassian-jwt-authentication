@@ -7,6 +7,7 @@ module AtlassianJwtAuthentication
         if AtlassianJwtAuthentication.debug_requests || AtlassianJwtAuthentication.log_requests
           f.response :logger, nil, bodies: AtlassianJwtAuthentication.debug_requests
         end
+        f.request :url_encoded
         f.adapter Faraday.default_adapter
       end
 
