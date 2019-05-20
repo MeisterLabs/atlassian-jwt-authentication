@@ -172,10 +172,10 @@ Do that using `AtlassianJwtAuthentication::UserBearerToken.user_bearer_token(acc
 You can use rake tasks to simplify plugin installation:
 
 ```ruby
-bin/rails atlassian:install[prefix,username,password,https://external.address.to/descriptor]
+bin/rails atlassian:install[prefix,email,api_token,https://external.address.to/descriptor]
 ```
 
-Where `prefix` is your instance name before `.atlassian.net`.
+Where `prefix` is your instance name before `.atlassian.net`. You an get an [API token](https://confluence.atlassian.com/cloud/api-tokens-938839638.html) from [Manage your account](https://id.atlassian.com/manage/api-tokens) page.
 
 ## Configuration
 
