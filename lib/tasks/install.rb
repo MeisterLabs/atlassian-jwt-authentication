@@ -2,13 +2,13 @@ require 'atlassian-jwt-authentication/http_client'
 
 namespace :atlassian do
   desc 'Install plugin descriptor into Atlassian Cloud product'
-  task :install, :prefix, :username, :password, :descriptor_url do |task, args|
+  task :install, :prefix, :email, :api_token, :descriptor_url do |task, args|
     require 'faraday'
     require 'json'
 
     connection =
       AtlassianJwtAuthentication::HttpClient.new("https://#{args.prefix}.atlassian.net") do |f|
-        f.basic_auth args.username, args.password
+        f.basic_auth args.email, args.api_token
       end
 
     def check_status(connection, status)
