@@ -177,6 +177,26 @@ def logger
 end
 ``` 
 
+### Custom error handling
+
+If you want to render your own pages when the add-on throws one of the following errors:
+- forbidden
+- unauthorized
+- payment_required
+
+overwrite the following methods in your controller:
+
+```ruby
+def render_forbidden
+  # do your own handling there
+  # render your own template 
+  render(template: '...', layout: '...')
+end
+
+# the same for render_payment_required and render_unauthorized
+
+```
+
 ## Installing the add-on
 
 You can use rake tasks to simplify plugin installation:
