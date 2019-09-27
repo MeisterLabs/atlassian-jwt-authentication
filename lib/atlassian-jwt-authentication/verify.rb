@@ -134,7 +134,7 @@ module AtlassianJwtAuthentication
     end
 
     def log(level, message)
-      return unless defined?(logger)
+      return if logger.nil?
 
       logger.send(level.to_sym, message)
     end
