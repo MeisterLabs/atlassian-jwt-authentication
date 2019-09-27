@@ -23,7 +23,8 @@ module AtlassianJwtAuthentication
         end
 
         if jwt
-          jwt_auth, account_id, context = Verify.verify_jwt(@addon_key, jwt, request, [])
+          jwt_verification = JWTVerification.new(@addon_key, jwt, request)
+          jwt_auth, account_id, context = jwt_verification.verify
 
           if jwt_auth
             request.set_header(JWT_TOKEN_HEADER, jwt_auth)

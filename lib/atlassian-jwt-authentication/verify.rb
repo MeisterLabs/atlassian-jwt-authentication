@@ -1,16 +1,29 @@
 require 'jwt'
 
 module AtlassianJwtAuthentication
-  class Verify
+  class JWTVerification
+    attr_accessor :addon_key, :jwt, :request, :exclude_qsh_params, :logger
 
-    def self.verify_jwt(addon_key, jwt, request, exclude_qsh_params = [])
+    def initialize(addon_key, jwt, request, &block)
+      self.addon_key = addon_key
+      self.jwt = jwt
+      self.request = request
+
+      self.exclude_qsh_params = []
+      self.logger = nil
+
+      yield self if block_given?
+    end
+
+    def verify
       unless jwt.present? && addon_key.present?
         return false
       end
 
       begin
-        decoded = JWT.decode(jwt, nil, false, {verify_expiration: AtlassianJwtAuthentication.verify_jwt_expiration})
-      rescue Exception => e
+        decoded = JWT.decode(jwt, nil, false, { verify_expiration: AtlassianJwtAuthentication.verify_jwt_expiration })
+      rescue => e
+        log(:error, "Could not decode JWT: #{e.to_s} \n #{e.backtrace.join("\n")}")
         return false
       end
 
@@ -25,11 +38,13 @@ module AtlassianJwtAuthentication
       ).first
 
       unless jwt_auth
+        log(:error, "Could not find jwt_token for client_key #{data['iss']} and addon_key #{addon_key}")
         return false
       end
 
       # Discard tokens without verification
       if encoding_data['alg'] == 'none'
+        log(:error, "The JWT checking algorithm was set to none for client_key #{data['iss']} and addon_key #{addon_key}")
         return false
       end
 
@@ -53,13 +68,15 @@ module AtlassianJwtAuthentication
       end
 
       unless header && payload
+        log(:error, "Error decoding JWT segments - no header and payload for client_key #{data['iss']} and addon_key #{addon_key}")
         return false
       end
 
       # Now verify the signature with the proper algorithm
       begin
         JWT.verify_signature(encoding_data['alg'], jwt_auth.shared_secret, signing_input, signature)
-      rescue Exception => e
+      rescue => e
+        log(:error, "Could not verify the JWT signature: #{e.to_s} \n #{e.backtrace.join("\n")}")
         return false
       end
 
@@ -81,12 +98,13 @@ module AtlassianJwtAuthentication
         qsh = request.method.upcase + '&' + path + '&' +
           qsh_parameters.
             sort.
-            map(&method(:encode_param)).
+            map{ |param_pair| encode_param(param_pair) }.
             join('&')
 
         qsh = Digest::SHA256.hexdigest(qsh)
 
         unless data['qsh'] == qsh
+          log(:error, "QSH mismatch for client_key #{data['iss']} and addon_key #{addon_key}")
           return false
         end
       end
@@ -105,7 +123,7 @@ module AtlassianJwtAuthentication
 
     private
 
-    def self.encode_param(param_pair)
+    def encode_param(param_pair)
       key, value = param_pair
 
       if value.respond_to?(:to_query)
@@ -113,6 +131,12 @@ module AtlassianJwtAuthentication
       else
         ERB::Util.url_encode(key) + '=' + ERB::Util.url_encode(value)
       end
+    end
+
+    def log(level, message)
+      return unless defined?(logger)
+
+      logger.send(level.to_sym, message)
     end
   end
 end

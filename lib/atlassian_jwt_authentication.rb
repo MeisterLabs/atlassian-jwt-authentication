@@ -1,6 +1,7 @@
 require 'atlassian-jwt-authentication/verify'
 require 'atlassian-jwt-authentication/middleware'
 require 'atlassian-jwt-authentication/filters'
+require 'atlassian-jwt-authentication/error_processor'
 require 'atlassian-jwt-authentication/version'
 require 'atlassian-jwt-authentication/helper'
 require 'atlassian-jwt-authentication/oauth2'
@@ -10,6 +11,7 @@ require 'atlassian-jwt-authentication/railtie' if defined?(Rails)
 module AtlassianJwtAuthentication
   include Helper
   include Filters
+  include ErrorProcessor
 
   mattr_accessor :context_path
   self.context_path = ''
