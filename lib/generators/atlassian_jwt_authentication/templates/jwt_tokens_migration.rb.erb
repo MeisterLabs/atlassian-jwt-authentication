@@ -1,4 +1,4 @@
-class CreateAtlassianJwtTokens < ActiveRecord::Migration
+class CreateAtlassianJwtTokens < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
   def self.up
     if table_exists? :jwt_tokens
       pp 'Skipping jwt_tokens table creation...'
