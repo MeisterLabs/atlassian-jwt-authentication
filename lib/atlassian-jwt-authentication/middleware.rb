@@ -6,6 +6,7 @@ module AtlassianJwtAuthentication
       JWT_TOKEN_HEADER = "#{PREFIX}.jwt_token".freeze
       JWT_CONTEXT = "#{PREFIX}.context".freeze
       JWT_ACCOUNT_ID = "#{PREFIX}.account_id".freeze
+      JWT_QSH_VERIFIED = "#{PREFIX}.qsh_verified".freeze
 
       def initialize(app, addon_key)
         @app = app
@@ -23,7 +24,7 @@ module AtlassianJwtAuthentication
         end
 
         if jwt
-          jwt_auth, account_id, context = Verify.verify_jwt(@addon_key, jwt, request, [])
+          jwt_auth, account_id, context, qsh_verified = Verify.verify_jwt(@addon_key, jwt, request, [])
 
           if jwt_auth
             request.set_header(JWT_TOKEN_HEADER, jwt_auth)
@@ -35,6 +36,10 @@ module AtlassianJwtAuthentication
 
           if context
             request.set_header(JWT_CONTEXT, context)
+          end
+
+          if qsh_verified
+            request.set_header(JWT_QSH_VERIFIED, qsh_verified)
           end
         end
 
