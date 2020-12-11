@@ -44,6 +44,7 @@ module AtlassianJwtAuthentication
       current_jwt_token.api_base_url = api_base_url if current_jwt_token.respond_to?(:api_base_url)
       current_jwt_token.oauth_client_id = params[:oauthClientId] if current_jwt_token.respond_to?(:oauth_client_id)
       current_jwt_token.public_key = params[:publicKey] if current_jwt_token.respond_to?(:public_key)
+      current_jwt_token.sen = params[:supportEntitlementNumber] if current_jwt_token.respond_to?(:sen)
       current_jwt_token.payload = params.to_unsafe_h if current_jwt_token.respond_to?(:payload)
 
       current_jwt_token.save!
