@@ -134,9 +134,9 @@ module AtlassianJwtAuthentication
       jwt_verification.exclude_qsh_params = exclude_qsh_params
       jwt_verification.logger = logger if defined?(logger)
 
-      jwt_auth, account_id, context = jwt_verification.verify
+      jwt_auth, account_id, context, qsh_verified = jwt_verification.verify
 
-      unless jwt_auth
+      unless jwt_auth && qsh_verified
         render_unauthorized
         return false
       end
