@@ -127,9 +127,9 @@ module AtlassianJwtAuthentication
         jwt = possible_jwt if algorithm == 'JWT'
       end
 
-      jwt_auth, account_id, context = AtlassianJwtAuthentication::Verify.verify_jwt(addon_key, jwt, request, exclude_qsh_params)
+      jwt_auth, account_id, context, qsh_verified = AtlassianJwtAuthentication::Verify.verify_jwt(addon_key, jwt, request, exclude_qsh_params)
 
-      unless jwt_auth
+      unless jwt_auth && qsh_verified
         head(:unauthorized)
         return false
       end
