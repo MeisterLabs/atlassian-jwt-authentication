@@ -86,11 +86,7 @@ module AtlassianJwtAuthentication
 
         qsh = Digest::SHA256.hexdigest(qsh)
 
-        unless data['qsh'] == qsh
-          return false
-        end
-
-        qsh_verified = true
+        qsh_verified = data['qsh'] == qsh
       else
         qsh_verified = false
       end
