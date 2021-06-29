@@ -165,7 +165,37 @@ To make requests on user's behalf add `act_as_user` in scopes required by your a
 
 Later you can obtain [OAuth bearer token](https://developer.atlassian.com/cloud/jira/software/oauth-2-jwt-bearer-token-authorization-grant-type/) from Atlassian.
 
-Do that using `AtlassianJwtAuthentication::UserBearerToken.user_bearer_token(account_id, scopes)` 
+Do that using `AtlassianJwtAuthentication::UserBearerToken.user_bearer_token(account_id, scopes)`
+
+### Logging
+
+If you want to debug the JWT verification define a logger in the controller where you're including `AtlassianJwtAuthentication`:
+
+```ruby
+def logger
+  Logger.new("#{Rails.root}/log/atlassian_jwt.log")
+end
+``` 
+
+### Custom error handling
+
+If you want to render your own pages when the add-on throws one of the following errors:
+- forbidden
+- unauthorized
+- payment_required
+
+overwrite the following methods in your controller:
+
+```ruby
+def render_forbidden
+  # do your own handling there
+  # render your own template 
+  render(template: '...', layout: '...')
+end
+
+# the same for render_payment_required and render_unauthorized
+
+```
 
 ## Installing the add-on
 
