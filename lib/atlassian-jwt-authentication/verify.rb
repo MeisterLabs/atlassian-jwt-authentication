@@ -85,6 +85,10 @@ module AtlassianJwtAuthentication
           log(:error, "QSH mismatch for client_key #{data['iss']} and addon_key #{addon_key}")
           return false
         end
+
+        qsh_verified = true
+      else
+        qsh_verified = false
       end
 
       context = data['context']
@@ -96,7 +100,7 @@ module AtlassianJwtAuthentication
         account_id = data['sub']
       end
 
-      [jwt_auth, account_id, context]
+      [jwt_auth, account_id, context, qsh_verified]
     end
 
     private
