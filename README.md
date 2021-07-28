@@ -215,6 +215,7 @@ Config | Environment variable | Description | Default |
 `AtlassianJwtAuthentication.verify_jwt_expiration` | `JWT_VERIFY_EXPIRATION` | when `false` allow expired tokens, speeds up development, especially combined with webpack hot module reloading | `true` 
 `AtlassianJwtAuthentication.log_requests` | `AJA_LOG_REQUESTS` | when `true` outgoing HTTP requests will be logged | `false` 
 `AtlassianJwtAuthentication.debug_requests` | `AJA_DEBUG_REQUESTS` | when `true` HTTP requests will include body content, implicitly turns on `log_requests` | `false` 
+`AtlassianJwtAuthentication.signed_install` | `AJA_SIGNED_INSTALL` | Installation lifecycle security improvements. Migration process described [here](https://community.developer.atlassian.com/t/action-required-atlassian-connect-installation-lifecycle-security-improvements/49046). In the descriptor set `"apiMigrations":{"signed-install":AtlassianJwtAuthentication.signed_install}`  | `false`
 
 ## Requirements
 

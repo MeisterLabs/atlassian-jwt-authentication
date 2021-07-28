@@ -49,9 +49,12 @@ module AtlassianJwtAuthentication
         return false
       end
 
-      if encoding_data['alg'] == 'RS256'
+      if AtlassianJwtAuthentication.signed_install && encoding_data['alg'] == 'RS256'
         response = Faraday.get("https://connect-install-keys.atlassian.com/#{encoding_data['kid']}")
-        return false unless response.success? && response.body
+        unless response.success? && response.body
+          log(:error, "Error retrieving atlassian public key. Response code #{response.status} and kid #{encoding_data['kid']}")
+          return false
+        end
 
         decode_key = OpenSSL::PKey::RSA.new(response.body)
         decode_options = {algorithms: ['RS256']}
