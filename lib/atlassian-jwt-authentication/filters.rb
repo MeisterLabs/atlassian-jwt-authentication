@@ -66,8 +66,8 @@ module AtlassianJwtAuthentication
       true
     end
 
-    def verify_jwt(addon_key)
-      _verify_jwt(addon_key, true)
+    def verify_jwt(addon_key, skip_qsh_verification: false)
+      _verify_jwt(addon_key, true, skip_qsh_verification: skip_qsh_verification)
     end
 
     def ensure_license
@@ -107,7 +107,7 @@ module AtlassianJwtAuthentication
 
     private
 
-    def _verify_jwt(addon_key, consider_param = false)
+    def _verify_jwt(addon_key, consider_param = false, skip_qsh_verification: false)
       self.current_jwt_token = nil
       self.current_account_id = nil
       self.current_jwt_context = nil
@@ -134,9 +134,9 @@ module AtlassianJwtAuthentication
       jwt_verification.exclude_qsh_params = exclude_qsh_params
       jwt_verification.logger = logger if defined?(logger)
 
-      jwt_auth, account_id, context = jwt_verification.verify
+      jwt_auth, account_id, context, qsh_verified = jwt_verification.verify
 
-      unless jwt_auth
+      unless jwt_auth && (qsh_verified || skip_qsh_verification)
         render_unauthorized
         return false
       end

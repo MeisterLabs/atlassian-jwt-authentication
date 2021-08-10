@@ -96,6 +96,45 @@ pp current_jwt_token.base_url
 
 If you need detailed user information you need to obtain it from the instance and process it respecting GDPR.
 
+#### How to send a signed HTTP request from the iframe back to the add-on service
+
+The initial call to load the iframe content is secured by JWT. However, the loaded content cannot
+sign subsequent requests. A typical example is content that makes AJAX calls back to the add-on. Cookie sessions cannot
+be used, as many browsers block third-party cookies by default. AJA provides middleware that
+works without cookies and helps making secure requests from the iframe.
+
+Standard JWT tokens are used to authenticate requests from the iframe back to the add-on service. A route can be secured
+using the following code:
+
+```ruby
+include AtlassianJwtAuthentication
+
+before_filter only: [:protected] do |controller|
+ controller.send(:verify_jwt, 'your-add-on-key', skip_qsh_verification: true)
+end
+```
+
+In order to secure your route, the token must be part of the HTTP request back to the add-on service. This can be done
+by using the standard `jwt` query parameter:
+
+```html
+<a href="/protected?jwt={{token}}">See more</a>
+```
+
+The second option is to use the Authorization HTTP header, e.g. for AJAX requests:
+
+```javascript
+beforeSend: function(request) {
+  request.setRequestHeader("Authorization", "JWT {{token}}");
+}
+```
+
+You can embed the token anywhere in your iframe content using the `token` content variable. For example, you can embed
+it in a meta tag, from where it can later be read by a script:
+
+```html
+<meta name="token" content="{{token}}">
+
 #### Add-on licensing
 If your add-on has a licensing model you can use the `ensure_license` filter to check for a valid license.
 As with the `verify_jwt` filter, this simply responds with an unauthorized header if there is no valid license
