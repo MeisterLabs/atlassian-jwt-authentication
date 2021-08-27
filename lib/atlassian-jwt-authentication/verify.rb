@@ -22,7 +22,7 @@ module AtlassianJwtAuthentication
 
       # First decode the token without signature & claims verification
       begin
-        decoded = JWT.decode(jwt, nil, false, { verify_expiration: AtlassianJwtAuthentication.verify_jwt_expiration, algorithm: 'HS256' })
+        decoded = JWT.decode(jwt, nil, false, { verify_expiration: AtlassianJwtAuthentication.verify_jwt_expiration })
       rescue => e
         log(:error, "Could not decode JWT: #{e.to_s} \n #{e.backtrace.join("\n")}")
         return false
@@ -49,9 +49,23 @@ module AtlassianJwtAuthentication
         return false
       end
 
+      if AtlassianJwtAuthentication.signed_install && encoding_data['alg'] == 'RS256'
+        response = Faraday.get("https://connect-install-keys.atlassian.com/#{encoding_data['kid']}")
+        unless response.success? && response.body
+          log(:error, "Error retrieving atlassian public key. Response code #{response.status} and kid #{encoding_data['kid']}")
+          return false
+        end
+
+        decode_key = OpenSSL::PKey::RSA.new(response.body)
+        decode_options = {algorithms: ['RS256']}
+      else
+        decode_key = jwt_auth.shared_secret
+        decode_options = {}
+      end
+
       # Decode the token again, this time with signature & claims verification
-      options = JWT::DefaultOptions::DEFAULT_OPTIONS.merge(verify_expiration: AtlassianJwtAuthentication.verify_jwt_expiration)
-      decoder = JWT::Decode.new(jwt, jwt_auth.shared_secret, true, options)
+      options = JWT::DefaultOptions::DEFAULT_OPTIONS.merge(verify_expiration: AtlassianJwtAuthentication.verify_jwt_expiration).merge(decode_options)
+      decoder = JWT::Decode.new(jwt, decode_key, true, options)
       payload, header = decoder.decode_segments
 
       unless header && payload
