@@ -66,7 +66,15 @@ module AtlassianJwtAuthentication
       # Decode the token again, this time with signature & claims verification
       options = JWT::DefaultOptions::DEFAULT_OPTIONS.merge(verify_expiration: AtlassianJwtAuthentication.verify_jwt_expiration).merge(decode_options)
       decoder = JWT::Decode.new(jwt, decode_key, true, options)
-      payload, header = decoder.decode_segments
+      begin
+        payload, header = decoder.decode_segments
+      rescue JWT::VerificationError
+        log(:error, "Error decoding JWT segments - signature is invalid")
+        return false
+      rescue JWT::ExpiredSignature
+        log(:error, "Error decoding JWT segments - signature is expired at #{data['exp']}")
+        return false
+      end
 
       unless header && payload
         log(:error, "Error decoding JWT segments - no header and payload for client_key #{data['iss']} and addon_key #{addon_key}")
