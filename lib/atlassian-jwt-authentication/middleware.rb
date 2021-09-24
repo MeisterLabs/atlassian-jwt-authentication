@@ -8,12 +8,18 @@ module AtlassianJwtAuthentication
       JWT_ACCOUNT_ID = "#{PREFIX}.account_id".freeze
       JWT_QSH_VERIFIED = "#{PREFIX}.qsh_verified".freeze
 
-      def initialize(app, addon_key)
+      def initialize(app, options)
         @app = app
-        @addon_key = addon_key
+        @addon_key = options[:addon_key]
+        @condition = options[:condition]
       end
 
       def call(env)
+        # Skip if @condition lambda is given and evaluates to false
+        if @condition && !@condition.call(env)
+          return @app.call(env)
+        end
+
         request = ActionDispatch::Request.new(env)
 
         jwt = request.params[:jwt]
