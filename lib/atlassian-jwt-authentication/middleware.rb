@@ -11,12 +11,12 @@ module AtlassianJwtAuthentication
       def initialize(app, options)
         @app = app
         @addon_key = options[:addon_key]
-        @condition = options[:condition]
+        @if = options[:if]
       end
 
       def call(env)
-        # Skip if @condition lambda is given and evaluates to false
-        if @condition && !@condition.call(env)
+        # Skip if @if predicate is given and evaluates to false
+        if @if && !@if.call(env)
           return @app.call(env)
         end
 
