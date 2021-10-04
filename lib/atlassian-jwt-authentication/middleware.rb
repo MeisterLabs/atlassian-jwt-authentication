@@ -12,6 +12,7 @@ module AtlassianJwtAuthentication
         @app = app
         @addon_key = options[:addon_key]
         @if = options[:if]
+        @audience = options[:audience]
       end
 
       def call(env)
@@ -30,7 +31,7 @@ module AtlassianJwtAuthentication
         end
 
         if jwt
-          jwt_verification = JWTVerification.new(@addon_key, jwt, request)
+          jwt_verification = JWTVerification.new(@addon_key, @audience, jwt, request)
           jwt_auth, account_id, context, qsh_verified = jwt_verification.verify
 
           if jwt_auth

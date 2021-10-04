@@ -2,10 +2,11 @@ require 'jwt'
 
 module AtlassianJwtAuthentication
   class JWTVerification
-    attr_accessor :addon_key, :jwt, :request, :exclude_qsh_params, :logger
+    attr_accessor :addon_key, :jwt, :audience, :request, :exclude_qsh_params, :logger
 
-    def initialize(addon_key, jwt, request, &block)
+    def initialize(addon_key, audience, jwt, request, &block)
       self.addon_key = addon_key
+      self.audience = audience
       self.jwt = jwt
       self.request = request
 
@@ -57,7 +58,7 @@ module AtlassianJwtAuthentication
         end
 
         decode_key = OpenSSL::PKey::RSA.new(response.body)
-        decode_options = {algorithms: ['RS256']}
+        decode_options = {algorithms: ['RS256'], verify_aud: true, aud: audience}
       else
         decode_key = jwt_auth.shared_secret
         decode_options = {}
