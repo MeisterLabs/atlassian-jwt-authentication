@@ -57,7 +57,7 @@ module AtlassianJwtAuthentication
         end
 
         decode_key = OpenSSL::PKey::RSA.new(response.body)
-        decode_options = {algorithms: ['RS256']}
+        decode_options = {algorithms: ['RS256'], verify_aud: true, aud: "https://" + Rails.application.secrets.http_host}
       else
         decode_key = jwt_auth.shared_secret
         decode_options = {}
