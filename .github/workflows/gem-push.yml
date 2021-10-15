@@ -6,8 +6,8 @@ on:
       - completed
     workflows:
       - "Build and test"
-#    branches:
-#      - master
+    branches:
+      - master
 
 jobs:
   build:
