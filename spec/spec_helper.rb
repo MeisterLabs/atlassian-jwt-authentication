@@ -1,4 +1,5 @@
 require 'rspec'
+require 'active_support'
 
 require File.dirname(__FILE__) + '/../lib/atlassian_jwt_authentication.rb'
 
