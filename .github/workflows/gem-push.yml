@@ -1,16 +1,17 @@
 name: Ruby Gem
 
 on:
-  push:
-    branches: [ master ]
-  # To be removed - we don't want to push on PR
-  pull_request:
-    branches: [ master ]
+  workflow_run:
+    types:
+      - completed
+    workflows:
+      - test
+#    branches:
+#      - master
 
 jobs:
   build:
     name: Build + Publish
-    needs: test
     runs-on: ubuntu-latest
 #    permissions:
 #      contents: read
