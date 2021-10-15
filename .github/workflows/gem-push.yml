@@ -1,4 +1,4 @@
-name: Ruby Gem
+name: Deploy package
 
 on:
   workflow_run:
