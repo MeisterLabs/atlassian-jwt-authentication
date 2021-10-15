@@ -27,4 +27,9 @@ module AtlassianJwtAuthentication
   # Debug external HTTP requests? Log bodies
   mattr_accessor :debug_requests
   self.debug_requests = ENV.fetch('AJA_DEBUG_REQUESTS', 'false') == 'true'
+
+  # installation lifecycle security improvements
+  # https://community.developer.atlassian.com/t/action-required-atlassian-connect-installation-lifecycle-security-improvements/49046
+  mattr_accessor :signed_install
+  self.signed_install = ENV.fetch('AJA_SIGNED_INSTALL', false)
 end

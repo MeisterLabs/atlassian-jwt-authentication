@@ -44,6 +44,7 @@ module AtlassianJwtAuthentication
       current_jwt_token.api_base_url = api_base_url if current_jwt_token.respond_to?(:api_base_url)
       current_jwt_token.oauth_client_id = params[:oauthClientId] if current_jwt_token.respond_to?(:oauth_client_id)
       current_jwt_token.public_key = params[:publicKey] if current_jwt_token.respond_to?(:public_key)
+      current_jwt_token.sen = params[:supportEntitlementNumber] if current_jwt_token.respond_to?(:sen)
       current_jwt_token.payload = params.to_unsafe_h if current_jwt_token.respond_to?(:payload)
 
       current_jwt_token.save!
@@ -65,8 +66,8 @@ module AtlassianJwtAuthentication
       true
     end
 
-    def verify_jwt(addon_key)
-      _verify_jwt(addon_key, true)
+    def verify_jwt(addon_key, skip_qsh_verification: false)
+      _verify_jwt(addon_key, true, skip_qsh_verification: skip_qsh_verification)
     end
 
     def ensure_license
@@ -106,7 +107,7 @@ module AtlassianJwtAuthentication
 
     private
 
-    def _verify_jwt(addon_key, consider_param = false)
+    def _verify_jwt(addon_key, consider_param = false, skip_qsh_verification: false)
       self.current_jwt_token = nil
       self.current_account_id = nil
       self.current_jwt_context = nil
@@ -129,13 +130,13 @@ module AtlassianJwtAuthentication
         jwt = possible_jwt if algorithm == 'JWT'
       end
 
-      jwt_verification = AtlassianJwtAuthentication::JWTVerification.new(addon_key, jwt, request)
+      jwt_verification = AtlassianJwtAuthentication::JWTVerification.new(addon_key, nil, jwt, request)
       jwt_verification.exclude_qsh_params = exclude_qsh_params
       jwt_verification.logger = logger if defined?(logger)
 
-      jwt_auth, account_id, context = jwt_verification.verify
+      jwt_auth, account_id, context, qsh_verified = jwt_verification.verify
 
-      unless jwt_auth
+      unless jwt_auth && (qsh_verified || skip_qsh_verification)
         render_unauthorized
         return false
       end
