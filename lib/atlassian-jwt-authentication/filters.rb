@@ -130,7 +130,7 @@ module AtlassianJwtAuthentication
         jwt = possible_jwt if algorithm == 'JWT'
       end
 
-      jwt_verification = AtlassianJwtAuthentication::JWTVerification.new(addon_key, nil, jwt, request)
+      jwt_verification = AtlassianJwtAuthentication::JWTVerification.new(addon_key, nil, nil, jwt, request)
       jwt_verification.exclude_qsh_params = exclude_qsh_params
       jwt_verification.logger = logger if defined?(logger)
 

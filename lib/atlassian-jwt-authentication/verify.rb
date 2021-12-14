@@ -2,11 +2,12 @@ require 'jwt'
 
 module AtlassianJwtAuthentication
   class JWTVerification
-    attr_accessor :addon_key, :jwt, :audience, :request, :exclude_qsh_params, :logger
+    attr_accessor :addon_key, :jwt, :audience, :force_asymmetric_verify, :request, :exclude_qsh_params, :logger
 
-    def initialize(addon_key, audience, jwt, request, &block)
+    def initialize(addon_key, audience, force_asymmetric_verify, jwt, request, &block)
       self.addon_key = addon_key
       self.audience = audience
+      self.force_asymmetric_verify = force_asymmetric_verify
       self.jwt = jwt
       self.request = request
 
@@ -50,7 +51,7 @@ module AtlassianJwtAuthentication
         return false
       end
 
-      if AtlassianJwtAuthentication.signed_install && encoding_data['alg'] == 'RS256'
+      if force_asymmetric_verify || (AtlassianJwtAuthentication.signed_install && encoding_data['alg'] == 'RS256')
         response = Faraday.get("https://connect-install-keys.atlassian.com/#{encoding_data['kid']}")
         unless response.success? && response.body
           log(:error, "Error retrieving atlassian public key. Response code #{response.status} and kid #{encoding_data['kid']}")

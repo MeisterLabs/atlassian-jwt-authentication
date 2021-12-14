@@ -13,6 +13,7 @@ module AtlassianJwtAuthentication
         @addon_key = options[:addon_key]
         @if = options[:if]
         @audience = options[:audience]
+        @force_asymmetric_verify = options[:force_asymmetric_verify]
       end
 
       def call(env)
@@ -31,7 +32,9 @@ module AtlassianJwtAuthentication
         end
 
         if jwt
-          jwt_verification = JWTVerification.new(@addon_key, @audience, jwt, request)
+          force_asymmetric_verify = @force_asymmetric_verify && @force_asymmetric_verify.call(env)
+
+          jwt_verification = JWTVerification.new(@addon_key, @audience, force_asymmetric_verify, jwt, request)
           jwt_auth, account_id, context, qsh_verified = jwt_verification.verify
 
           if jwt_auth
