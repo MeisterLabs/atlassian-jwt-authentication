@@ -256,6 +256,12 @@ Config | Environment variable | Description | Default |
 `AtlassianJwtAuthentication.debug_requests` | `AJA_DEBUG_REQUESTS` | when `true` HTTP requests will include body content, implicitly turns on `log_requests` | `false` 
 `AtlassianJwtAuthentication.signed_install` | `AJA_SIGNED_INSTALL` | Installation lifecycle security improvements. Migration process described [here](https://community.developer.atlassian.com/t/action-required-atlassian-connect-installation-lifecycle-security-improvements/49046). In the descriptor set `"apiMigrations":{"signed-install":AtlassianJwtAuthentication.signed_install}`  | `false`
 
+### Middleware configuration
+
+Parameter | Description /
+--------- |-------------|
+`force_asymmetric_verify` | A `proc` expected to return 'true' if the currently processed request must be validated with RS256 algorithm. Used for _signed_install_ endpoints.
+
 ## Requirements
 
 Ruby 2.0+, ActiveRecord 4.1+
