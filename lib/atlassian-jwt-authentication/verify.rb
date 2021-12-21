@@ -40,11 +40,6 @@ module AtlassianJwtAuthentication
           addon_key: addon_key
       ).first
 
-      unless jwt_auth
-        log(:error, "Could not find jwt_token for client_key #{data['iss']} and addon_key #{addon_key}")
-        return false
-      end
-
       # Discard the tokens without verification
       if encoding_data['alg'] == 'none'
         log(:error, "The JWT checking algorithm was set to none for client_key #{data['iss']} and addon_key #{addon_key}")
@@ -61,6 +56,11 @@ module AtlassianJwtAuthentication
         decode_key = OpenSSL::PKey::RSA.new(response.body)
         decode_options = {algorithms: ['RS256'], verify_aud: true, aud: audience}
       else
+        unless jwt_auth
+          log(:error, "Could not find jwt_token for client_key #{data['iss']} and addon_key #{addon_key}")
+          return false
+        end
+
         decode_key = jwt_auth.shared_secret
         decode_options = {}
       end
@@ -86,7 +86,7 @@ module AtlassianJwtAuthentication
       if data['qsh']
         # Verify the query has not been tampered by Creating a Query Hash and
         # comparing it against the qsh claim on the verified token
-        if jwt_auth.base_url.present? && request.url.include?(jwt_auth.base_url)
+        if jwt_auth.present? && jwt_auth.base_url.present? && request.url.include?(jwt_auth.base_url)
           path = request.url.gsub(jwt_auth.base_url, '')
         else
           path = request.path.gsub(AtlassianJwtAuthentication::context_path, '')
