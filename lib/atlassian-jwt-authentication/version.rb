@@ -1,7 +1,7 @@
 module AtlassianJwtAuthentication
   MAJOR_VERSION = "0"
   MINOR_VERSION = "9"
-  PATH_VERSION = "0"
+  PATH_VERSION = "1"
 
   # rubygems don't support semantic versioning - https://github.com/rubygems/rubygems/issues/592, using GITHUB_RUN_NUMBER to represent build number
   # going to release pre versions automatically
