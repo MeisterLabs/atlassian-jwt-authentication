@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
 
   s.author = 'Laura Barladeanu'
   s.email = 'laura@meisterlabs.com'
-  s.homepage = 'http://meisterlabs.com/'
+  s.homepage = 'https://meisterlabs.com/'
 
   s.required_ruby_version = '>= 2'
 
