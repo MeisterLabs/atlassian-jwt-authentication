@@ -24,17 +24,17 @@ module AtlassianJwtAuthentication
       base_url = params[:baseUrl]
       api_base_url = params[:baseApiUrl] || base_url
 
-      # All install(including upgrades)/uninstall hooks will be asymmetrically
+      # All install (including upgrades) / uninstall hooks are asymmetrically
       # signed with RS256 (RSA Signature with SHA-256) algorithm
       return false unless _verify_jwt(addon_key, force_asymmetric_verify: true)
 
       jwt_auth = JwtToken.where(client_key: client_key, addon_key: addon_key).first
-      if jwt_auth && jwt_auth.id != current_jwt_token.id
+      if jwt_auth.nil?
+        self.current_jwt_token = JwtToken.new(jwt_token_params)
+      elsif jwt_auth.id != current_jwt_token.id
         # Update request was issued to another plugin
         render_forbidden
         return false
-      elsif jwt_auth.nil?
-        self.current_jwt_token = JwtToken.new(jwt_token_params)
       end
 
       current_jwt_token.addon_key = addon_key
