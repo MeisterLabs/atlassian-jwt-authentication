@@ -46,7 +46,8 @@ module AtlassianJwtAuthentication
         return false
       end
 
-      if force_asymmetric_verify || (AtlassianJwtAuthentication.signed_install && encoding_data['alg'] == 'RS256')
+      if force_asymmetric_verify ||
+        AtlassianJwtAuthentication.signed_install && encoding_data['alg'] == 'RS256'
         response = Faraday.get("https://connect-install-keys.atlassian.com/#{encoding_data['kid']}")
         unless response.success? && response.body
           log(:error, "Error retrieving atlassian public key. Response code #{response.status} and kid #{encoding_data['kid']}")
@@ -54,7 +55,6 @@ module AtlassianJwtAuthentication
         end
 
         decode_key = OpenSSL::PKey::RSA.new(response.body)
-        decode_options = {algorithms: ['RS256'], verify_aud: true, aud: audience}
       else
         unless jwt_auth
           log(:error, "Could not find jwt_token for client_key #{data['iss']} and addon_key #{addon_key}")
@@ -62,12 +62,17 @@ module AtlassianJwtAuthentication
         end
 
         decode_key = jwt_auth.shared_secret
-        decode_options = {}
+      end
+
+      decode_options = {}
+      if encoding_data['alg'] == 'RS256'
+        decode_options = { algorithms: ['RS256'] }
       end
 
       # Decode the token again, this time with signature & claims verification
       options = JWT::DefaultOptions::DEFAULT_OPTIONS.merge(verify_expiration: AtlassianJwtAuthentication.verify_jwt_expiration).merge(decode_options)
       decoder = JWT::Decode.new(jwt, decode_key, true, options)
+
       begin
         payload, header = decoder.decode_segments
       rescue JWT::VerificationError

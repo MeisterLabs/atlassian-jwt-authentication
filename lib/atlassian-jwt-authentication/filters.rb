@@ -24,17 +24,17 @@ module AtlassianJwtAuthentication
       base_url = params[:baseUrl]
       api_base_url = params[:baseApiUrl] || base_url
 
+      # All install (including upgrades) / uninstall hooks are asymmetrically
+      # signed with RS256 (RSA Signature with SHA-256) algorithm
+      return false unless _verify_jwt(addon_key, force_asymmetric_verify: true)
+
       jwt_auth = JwtToken.where(client_key: client_key, addon_key: addon_key).first
-      if jwt_auth
-        # The add-on was previously installed on this client
-        return false unless _verify_jwt(addon_key)
-        if jwt_auth.id != current_jwt_token.id
-          # Update request was issued to another plugin
-          render_forbidden
-          return false
-        end
-      else
+      if jwt_auth.nil?
         self.current_jwt_token = JwtToken.new(jwt_token_params)
+      elsif jwt_auth.id != current_jwt_token.id
+        # Update request was issued to another plugin
+        render_forbidden
+        return false
       end
 
       current_jwt_token.addon_key = addon_key
@@ -55,7 +55,7 @@ module AtlassianJwtAuthentication
     def on_add_on_uninstalled
       addon_key = params[:key]
 
-      return unless _verify_jwt(addon_key)
+      return unless _verify_jwt(addon_key, force_asymmetric_verify: true)
 
       client_key = params[:clientKey]
 
@@ -67,7 +67,7 @@ module AtlassianJwtAuthentication
     end
 
     def verify_jwt(addon_key, skip_qsh_verification: false)
-      _verify_jwt(addon_key, true, skip_qsh_verification: skip_qsh_verification)
+      _verify_jwt(addon_key, consider_param: true, skip_qsh_verification: skip_qsh_verification)
     end
 
     def ensure_license
@@ -93,7 +93,7 @@ module AtlassianJwtAuthentication
         end
 
         unless response.data['state'] == 'ENABLED' &&
-            response.data['license'] && response.data['license']['active']
+          response.data['license'] && response.data['license']['active']
           log(:error, "client #{current_jwt_token.client_key}: no active & enabled license was found")
           render_payment_required
           return false
@@ -107,7 +107,7 @@ module AtlassianJwtAuthentication
 
     private
 
-    def _verify_jwt(addon_key, consider_param = false, skip_qsh_verification: false)
+    def _verify_jwt(addon_key, consider_param: false, skip_qsh_verification: false, force_asymmetric_verify: false)
       self.current_jwt_token = nil
       self.current_account_id = nil
       self.current_jwt_context = nil
@@ -130,7 +130,7 @@ module AtlassianJwtAuthentication
         jwt = possible_jwt if algorithm == 'JWT'
       end
 
-      jwt_verification = AtlassianJwtAuthentication::JWTVerification.new(addon_key, nil, nil, jwt, request)
+      jwt_verification = AtlassianJwtAuthentication::JWTVerification.new(addon_key, nil, force_asymmetric_verify, jwt, request)
       jwt_verification.exclude_qsh_params = exclude_qsh_params
       jwt_verification.logger = logger if defined?(logger)
 
@@ -150,8 +150,8 @@ module AtlassianJwtAuthentication
 
     def jwt_token_params
       {
-          client_key: params.permit(:clientKey)['clientKey'],
-          addon_key: params.permit(:key)['key']
+        client_key: params.permit(:clientKey)['clientKey'],
+        addon_key: params.permit(:key)['key']
       }
     end
 
