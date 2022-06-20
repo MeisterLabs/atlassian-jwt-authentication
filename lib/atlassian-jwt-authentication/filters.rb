@@ -136,7 +136,7 @@ module AtlassianJwtAuthentication
 
       jwt_auth, account_id, context, qsh_verified = jwt_verification.verify
 
-      unless jwt_auth && (qsh_verified || skip_qsh_verification)
+      if jwt_auth == false || (!skip_qsh_verification && !qsh_verified)
         render_unauthorized
         return false
       end
