@@ -17,9 +17,11 @@ module AtlassianJwtAuthentication
       yield self if block_given?
     end
 
+    UNVERIFIED_RESULT = [nil, nil, nil, false, false]
+
     def verify
       unless jwt.present? && addon_key.present?
-        return false
+        return UNVERIFIED_RESULT
       end
 
       # First decode the token without signature & claims verification
@@ -27,7 +29,7 @@ module AtlassianJwtAuthentication
         decoded = JWT.decode(jwt, nil, false, { verify_expiration: AtlassianJwtAuthentication.verify_jwt_expiration })
       rescue => e
         log(:error, "Could not decode JWT: #{e.to_s} \n #{e.backtrace.join("\n")}")
-        return false
+        return UNVERIFIED_RESULT
       end
 
       # Extract the data
@@ -43,7 +45,7 @@ module AtlassianJwtAuthentication
       # Discard the tokens without verification
       if encoding_data['alg'] == 'none'
         log(:error, "The JWT checking algorithm was set to none for client_key #{data['iss']} and addon_key #{addon_key}")
-        return false
+        return UNVERIFIED_RESULT
       end
 
       if force_asymmetric_verify ||
@@ -51,14 +53,14 @@ module AtlassianJwtAuthentication
         response = Faraday.get("https://connect-install-keys.atlassian.com/#{encoding_data['kid']}")
         unless response.success? && response.body
           log(:error, "Error retrieving atlassian public key. Response code #{response.status} and kid #{encoding_data['kid']}")
-          return false
+          return UNVERIFIED_RESULT
         end
 
         decode_key = OpenSSL::PKey::RSA.new(response.body)
       else
         unless jwt_auth
           log(:error, "Could not find jwt_token for client_key #{data['iss']} and addon_key #{addon_key}")
-          return false
+          return UNVERIFIED_RESULT
         end
 
         decode_key = jwt_auth.shared_secret
@@ -66,7 +68,7 @@ module AtlassianJwtAuthentication
 
       decode_options = {}
       if encoding_data['alg'] == 'RS256'
-        decode_options = { algorithms: ['RS256'] }
+        decode_options = { algorithms: ['RS256'], verify_aud: true, aud: audience }
       end
 
       # Decode the token again, this time with signature & claims verification
@@ -77,15 +79,15 @@ module AtlassianJwtAuthentication
         payload, header = decoder.decode_segments
       rescue JWT::VerificationError
         log(:error, "Error decoding JWT segments - signature is invalid")
-        return false
+        return UNVERIFIED_RESULT
       rescue JWT::ExpiredSignature
         log(:error, "Error decoding JWT segments - signature is expired at #{data['exp']}")
-        return false
+        return UNVERIFIED_RESULT
       end
 
       unless header && payload
         log(:error, "Error decoding JWT segments - no header and payload for client_key #{data['iss']} and addon_key #{addon_key}")
-        return false
+        return UNVERIFIED_RESULT
       end
 
       if data['qsh']
@@ -124,7 +126,7 @@ module AtlassianJwtAuthentication
         account_id = data['sub']
       end
 
-      [jwt_auth, account_id, context, qsh_verified]
+      [jwt_auth, account_id, context, qsh_verified, true]
     end
 
     private
