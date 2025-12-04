@@ -15,7 +15,7 @@ jobs:
     runs-on: arc-runner-base
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 #    permissions:
-#      contents: read
+#      contents: read 
 #      packages: write
 
     steps:
